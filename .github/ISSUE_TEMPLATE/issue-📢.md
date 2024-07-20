@@ -1,6 +1,6 @@
 ---
 name: "Issue \U0001F4E2"
-about: Suggest an idea for this project
+about: Describe this issue template's purpose here.
 title: ''
 labels: ''
 assignees: ''
