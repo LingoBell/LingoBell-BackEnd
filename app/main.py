@@ -2,6 +2,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+import os
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -60,6 +61,17 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # 1. 토큰을 가져온다(request.headers['Authorization'])
         auth_header = request.headers.get('Authorization')
+        if os.getenv('ENV') == 'development' and auth_header in [
+            'JWLEE',
+            'SWCHO',
+            'JHKIM',
+            'HWPARK'
+        ]:
+            request.state.user = {
+                "uid": auth_header
+            }
+            response = await call_next(request)
+            return response
         print('auth_header:',auth_header)
         # Bearer {TOKEN}
         # 1-1 토큰이 없으면 status를 403으로 반환한다  
