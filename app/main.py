@@ -18,9 +18,6 @@ app = FastAPI()
 security = HTTPBearer()
 
 origins = [
-    "http://localhost",
-    "http://localhost:9000",
-    "http://localhost:8000",
     "http://localhost:3000",
     # 필요한 도메인 추가
 ]
@@ -47,6 +44,15 @@ def verify_token(auth_token: str):
 ## auth middleware 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
+
+        if request.method == "OPTIONS":
+                response = JSONResponse(status_code=200, content='CORS preflight')
+                response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+                response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, DELETE, PUT"
+                response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+
+                return response
 
         if request.url.path in ["/docs", "/openapi.json"]:
             return await call_next(request)
@@ -78,6 +84,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # 2. 로그인을 안한경우 status를 403으로 반환한다   
         response = await call_next(request)
         return response
+
 
 
 
