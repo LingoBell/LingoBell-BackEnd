@@ -1,13 +1,14 @@
 # 애플리케이션의 진입점
 from dotenv import load_dotenv
 load_dotenv()
+
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.credentials.firebase_config
-# from app.database import init_db
-# from app.routes import chat_routes
+from app.database import init_db
+from app.routes import chat_routes
 import uvicorn
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -86,8 +87,6 @@ class AuthMiddleware(BaseHTTPMiddleware):
         return response
 
 
-
-
 app.add_middleware(
     AuthMiddleware
 )
@@ -95,8 +94,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    # init_db()
-    print('1')
+    init_db()
 
 # # 구글 로그인 요청 endpoint
 @app.post("/verify-token")
@@ -132,7 +130,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     data = request.state.user
     print(request.state.user)
     return data
-# app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
+app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
 
 
 if __name__ == "__main__":
