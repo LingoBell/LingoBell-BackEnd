@@ -1,1 +1,5 @@
 .env
+app/credentials
+__pycache__/
+*.py[cod]
+*$py.class
