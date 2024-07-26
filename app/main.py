@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
-import app.credentials.firebase_config
+import app.connection.firebase_config
 from app.database import init_db
 from app.routes import chat_routes
 import uvicorn
