@@ -18,6 +18,7 @@ origins = [
     "http://localhost",
     "http://localhost:9000",
     "http://localhost:8000"
+    
     # 필요한 도메인 추가
 ]
 
