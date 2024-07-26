@@ -42,22 +42,23 @@ def verify_token(auth_token: str): # -> 토
         raise HTTPException(status_code=401, detail="Invalid ID token")
 
 ## auth middleware 
-def authMiddleware(request: Request, call_next):
-    # 1. 토큰을 가져온다(request.headers['Authorization'])
-    # Bearer {TOKEN}
-    # 1-1 토큰이 없으면 status를 403으로 반환한다  
-    # 2. 토큰을 검증한다
-    # 2-1. 검증에 실패하면 status를 403으로 반환한다  
-    # 3. 유저 정보를 request안의 user라는 키에 넣어준다
-    # 
-    # 검증
-    # 1. route에서 request.status.user를 해서 값을 가져올 수 있다.
-    # 2. 로그인을 안한경우 status를 403으로 반환한다  
-    print('middleware')
+class AuthMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # 1. 토큰을 가져온다(request.headers['Authorization'])
+        # Bearer {TOKEN}
+        # 1-1 토큰이 없으면 status를 403으로 반환한다  
+        # 2. 토큰을 검증한다
+        # 2-1. 검증에 실패하면 status를 403으로 반환한다  
+        # 3. 유저 정보를 request안의 user라는 키에 넣어준다
+        # 
+        # 검증
+        # 1. route에서 request.status.user를 해서 값을 가져올 수 있다.
+        # 2. 로그인을 안한경우 status를 403으로 반환한다   
+        response = await call_next(request)
+        return response
 
-    return call_next(request)
 app.add_middleware(
-    authMiddleware
+    AuthMiddleware
 )
 
 @app.on_event("startup")
