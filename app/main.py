@@ -1,13 +1,14 @@
 # 애플리케이션의 진입점
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.routes import chat_routes
 import uvicorn
-from dotenv import load_dotenv
 
-load_dotenv()
 app = FastAPI()
 
 origins = [
