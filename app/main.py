@@ -73,6 +73,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         print('auth_header:',auth_header)
+        print("Authenticated user:", request.state.user)
+
         # Bearer {TOKEN}
         # 1-1 토큰이 없으면 status를 403으로 반환한다  
         if not auth_header or not auth_header.startswith('Bearer'):
@@ -133,7 +135,7 @@ async def verify_token_endpoint(request: Request):
 # @app.post("/verify-jwt")
 # async def verify_jwt_endpoint(credentials: HTTPAuthorizationCredentials = Depends(security)):
 #     token = credentials.credentials
-#     decoded_token = verify_token(token)
+#     decoded_token = verify_token(token) 
 #     return {"message": "Token is valid", "user_id": decoded_token["uid"]}
 
 @app.get('/test-user-token')
