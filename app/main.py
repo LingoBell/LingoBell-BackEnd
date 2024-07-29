@@ -10,6 +10,7 @@ from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db
 from app.routes import chat_routes
+from app.controllers.auth_router import router as auth_router
 import uvicorn
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -21,6 +22,7 @@ security = HTTPBearer()
 
 origins = [
     "http://localhost:3000",
+    "http://localhost:9000",
     # 필요한 도메인 추가
 ]
 
@@ -49,7 +51,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if request.method == "OPTIONS":
                 response = JSONResponse(status_code=200, content='CORS preflight')
-                response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+                response.headers["Access-Control-Allow-Origin"] = "http://localhost:9000"
                 response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, DELETE, PUT"
                 response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
                 response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -61,6 +63,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # 1. 토큰을 가져온다(request.headers['Authorization'])
         auth_header = request.headers.get('Authorization')
+        # 테스트용 코드(development에서만 사용가능하도록 만들어냄)
         if os.getenv('ENV') == 'development' and auth_header in [
             'JWLEE',
             'SWCHO',
@@ -72,7 +75,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             }
             response = await call_next(request)
             return response
-        print('auth_header:',auth_header)
+
         # Bearer {TOKEN}
         # 1-1 토큰이 없으면 status를 403으로 반환한다  
         if not auth_header or not auth_header.startswith('Bearer'):
@@ -143,6 +146,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     print(request.state.user)
     return data
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 
 
 if __name__ == "__main__":
