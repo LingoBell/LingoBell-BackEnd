@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db
-from app.routes import chat_routes
+from app.routes import chat_routes, user_routes
 import uvicorn
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -145,6 +145,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     print(request.state.user)
     return data
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
+app.include_router(user_routes.router, prefix="/users", tags=["users"]) 
 
 
 if __name__ == "__main__":

@@ -18,7 +18,6 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
         raise HTTPException(status_code=404, detail="User not found")
     
     userId = user.userId
-    # print('userId 뽑아 ', userId)
 
     db_chat_room = ChatRoom(
         accessStatus=chat_room['accessStatus'],
@@ -28,7 +27,6 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
         userId=userId,
         partnerId=chat_room['partnerId'],
     )
-    # print("db_chat_room", db_chat_room)
     db.add(db_chat_room)
     db.commit()
     db.refresh(db_chat_room)
