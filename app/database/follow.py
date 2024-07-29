@@ -6,4 +6,4 @@ class Follow(Base):
 
     followUserId = Column(Integer, ForeignKey('users.userCode'), primary_key=True)
     userId = Column(Integer, ForeignKey('users.userCode'), nullable=False)
-    followStatus = Column(Boolean, nullable=False)
+    followStatus = Column(Integer, nullable=False)
