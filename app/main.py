@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
@@ -15,7 +15,6 @@ import uvicorn
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from app.services.transcribe_service import transcribe_audio
 
 
 
@@ -147,20 +146,8 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     print(request.state.user)
     return data
 
-def background_transcribe():
-    global transcription_result
-    transcription_result = transcribe_audio()
 
-@app.get("/transcribe")
-def transcribe(background_tasks: BackgroundTasks):
-    background_tasks.add_task(background_transcribe)
-    return {"message": "Transcription process started."}
-
-@app.get("/get_transcription")
-def get_transcription():
-    global transcription_result
-    return {"transcription": transcription_result}
-
+app.include_router(transcribe_controller.router, prefix="/transcribe", tags=["transcribe"])
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
 
 

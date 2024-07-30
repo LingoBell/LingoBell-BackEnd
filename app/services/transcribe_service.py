@@ -66,6 +66,9 @@ def transcribe_audio(model_name="base", non_english=True, energy_threshold=300, 
                 for line in transcription:
                     print(line)
                 print('', end='', flush=True)
+                
+                with open("transcription.txt", "w") as txt_file:
+                    txt_file.write("\n".join(transcription))
 
                 sleep(0.25)
         except KeyboardInterrupt:
