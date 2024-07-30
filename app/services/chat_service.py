@@ -32,3 +32,11 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
     db.refresh(db_chat_room)
     print("chatRoomId", db_chat_room.chatRoomId)
     return {"chatRoomId": db_chat_room.chatRoomId}
+
+def update_live_chat_status(db: Session, chat_room_id: int):
+    print('상태 변경할 채팅방 id : ', chat_room_id)
+    chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).update({"joinStatus": 2})
+    db.commit()
+    print("update된 chat_room", chat_room)
+
+    
