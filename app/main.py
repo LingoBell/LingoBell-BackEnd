@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db
-from app.routes import chat_routes
+from app.routes import chat_routes, user_routes
 import uvicorn
 from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -73,6 +73,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         print('auth_header:',auth_header)
+        print("Authenticated user:", request.state.user)
+
         # Bearer {TOKEN}
         # 1-1 토큰이 없으면 status를 403으로 반환한다  
         if not auth_header or not auth_header.startswith('Bearer'):
@@ -133,7 +135,7 @@ async def verify_token_endpoint(request: Request):
 # @app.post("/verify-jwt")
 # async def verify_jwt_endpoint(credentials: HTTPAuthorizationCredentials = Depends(security)):
 #     token = credentials.credentials
-#     decoded_token = verify_token(token)
+#     decoded_token = verify_token(token) 
 #     return {"message": "Token is valid", "user_id": decoded_token["uid"]}
 
 @app.get('/test-user-token')
@@ -143,6 +145,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     print(request.state.user)
     return data
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
+app.include_router(user_routes.router, prefix="/users", tags=["users"]) 
 
 
 if __name__ == "__main__":
