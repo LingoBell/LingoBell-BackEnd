@@ -1,4 +1,5 @@
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.database.models import User, ChatRoom
 from app.database import SessionLocal
@@ -15,33 +16,28 @@ def get_request_user_list_data(db: Session, uid: str):
     
     print('요청받은 user의 userId', user.userId)
 
-    chat_rooms = db.query(ChatRoom).filter(
-        ChatRoom.partnerId == user.userId,
-        ChatRoom.joinStatus == 1
-    ).all()
-    
-    if not chat_rooms:
-        print(f'No chat rooms found for partnerId {user.userId}.')
-        return []
-    
-    user_ids = [chat_room.userId for chat_room in chat_rooms]
-    related_users = db.query(User).filter(User.userId.in_(user_ids)).all()
+    stmt = (
+        select(ChatRoom, User)
+        .join(User, ChatRoom.userId == User.userId)
+        .where(ChatRoom.partnerId == user.userId)
+    )
+    results = db.execute(stmt).all()
 
-    results = []
-    for chat_room in chat_rooms:
-        related_users = next((user for user in related_users if user.userId == chat_room.userId), None)
-        if related_users:
-            results.append({
-                'chatRoomId': chat_room.chatRoomId,
-                'chatRoomName': chat_room.chatName,
-                'chatRoomDescript': chat_room.chatRoomDescript,
-                'userId': related_users.userId,
-                'userName': related_users.userName,
-                'userCode': related_users.userCode,
-                'profileImages': related_users.profileImages,
-                'description': related_users.description,
-                'nation': related_users.nation,
-                'email': related_users.email
-            })
-
-    return results
+    result_list = []
+    for chatrooms, users in results:
+        result = {
+            'chatRoomId': chatrooms.chatRoomId,
+            'chatRoomName': chatrooms.chatName,
+            'chatRoomDescript': chatrooms.chatRoomDescript,
+            'userId': users.userId,
+            'userName': users.userName,
+            'userCode': users.userCode,
+            'profileImages': users.profileImages,
+            'description': users.description,
+            'nation': users.nation,
+            'email': users.email
+        }
+        print('결과', result)
+        result_list.append(result)
+        
+    return result_list

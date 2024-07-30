@@ -73,7 +73,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         print('auth_header:',auth_header)
-        print("Authenticated user:", request.state.user)
+        
 
         # Bearer {TOKEN}
         # 1-1 토큰이 없으면 status를 403으로 반환한다  

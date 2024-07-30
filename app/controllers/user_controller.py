@@ -24,6 +24,7 @@ def get_user_list(db: Session = Depends(get_db)):
 @router.get("/requestPartners")
 def get_request_user_list(request: Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
+    print('state   ', uid)
     user_data = get_request_user_list_data(db, uid)
     if not user_data:
         raise HTTPException(status_code=404, detail="Request UserList not found")
