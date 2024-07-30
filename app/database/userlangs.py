@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, Boolean, String
+from sqlalchemy import Column, Integer, ForeignKey, String
 from app.database import Base
 
 class UserLang(Base):
@@ -6,4 +6,4 @@ class UserLang(Base):
 
     langCode = Column(String(500), ForeignKey('languages.langCode'), primary_key=True)
     userId = Column(Integer, ForeignKey('users.userCode'), primary_key=True)
-    langLevel = Column(Boolean, nullable=True)
+    langLevel = Column(Integer, nullable=True)

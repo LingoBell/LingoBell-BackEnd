@@ -5,7 +5,6 @@ class User(Base):
     __tablename__ = 'users'
 
     userId = Column(Integer, primary_key=True, index=True)
-    userCode = Column(String(50))
     userName = Column(String(500), unique=True, index=True)
     email = Column(String(500), unique=True, index=True)
     pwd = Column(String(500))
@@ -14,3 +13,4 @@ class User(Base):
     description = Column(String(500))
     nation = Column(Integer, ForeignKey('nation.nationId'))
     profileImages = Column(String(500), nullable=True)
+    userCode = Column(String(50), unique=True, index=True)
