@@ -149,5 +149,6 @@ app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 
 
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
