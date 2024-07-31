@@ -5,7 +5,6 @@ from app.database.models import User, ChatRoom, UserLearningLang
 from app.database import SessionLocal
 
 
-
 def add_user_profile_data(db : Session, uid : str, form_data : dict):    
     try:
         user_profile = User(
