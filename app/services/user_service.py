@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database.models import User, ChatRoom
 from app.database import SessionLocal
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 
 
 class FormData(BaseModel):
