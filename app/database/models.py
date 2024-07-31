@@ -2,14 +2,13 @@ from app.database.user import User
 from app.database.chat import ChatRoom
 from app.database.language import Language
 from app.database.interest import Interest
-from app.database.userschedule import UserSchedule
 from app.database.nation import Nation
 from app.database.attenduser import AttendUser
 from app.database.blockeduser import BlockedUser
 from app.database.follow import Follow
 from app.database.notification import Notification
 from app.database.chatmessage import ChatMessage
-from app.database.aimessage import AIMessage
+from app.database.airecommend import AiRecommend
 from app.database.userlearninglangs import UserLearningLang
-from app.database.userlangs import UserLang
 from app.database.userinterests import UserInterest
+from app.database.aiquiz import AiQuiz

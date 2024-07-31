@@ -1,25 +1,35 @@
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.database.models import User, ChatRoom
+from app.database.models import User, ChatRoom, UserLearningLang
 from app.database import SessionLocal
-from pydantic import BaseModel
-from typing import List, Optional
 
 
-class FormData(BaseModel):
-        selectedInterests: List[str]
-        gender : str
-        name : str
-        mainLanguage : str
-        learningLanguages : List[str]
-        languageWithLevel : List[str]
-        userIntroduce: Optional[str] = None
-        nation : str
+def add_user_profile_data(db : Session, uid : str, form_data : dict):    
+    try:
+        user_profile = User(
+            userCode=uid,
+            userName=form_data['name'],
+            gender=form_data['gender'],
+            description=form_data['userIntroduce'],
+            # nation=form_data.get('nation', {}).get('label'),
+            # mainLanguage=form_data['mainLanguage']
+        )
+        db.add(user_profile)
+        db.commit()
+        db.refresh(user_profile)
 
-def get_user_form_data(data : FormData):
-    print("formData:", data)
-    return data
+        user = db.query(User).filter(User.userCode == uid).first()
+        
+        return user_profile
+    except Exception as e:
+        db.rollback()
+        print('ERROR')
+        raise HTTPException(status_code=400, detail=str(e))
+        # user_learning_language = UserLearningLang (
+        #     userId=uid,
+        #     langCode=
+        # )
 
 
 def get_user_list_data(db: Session):

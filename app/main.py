@@ -148,6 +148,9 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     data = request.state.user
     print(request.state.user)
     return data
+
+
+
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 

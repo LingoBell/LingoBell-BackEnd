@@ -4,5 +4,5 @@ from app.database import Base
 class Nation(Base):
     __tablename__ = 'nation'
 
-    nationId = Column(Integer, primary_key=True, index=True)
-    nationName = Column(String(500), nullable=False)
+    nationId = Column(String(4), primary_key=True, index=True)
+    nationName = Column(String(20), nullable=False)

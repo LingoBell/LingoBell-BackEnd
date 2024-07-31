@@ -4,6 +4,8 @@ from app.database import Base
 class UserLearningLang(Base):
     __tablename__ = 'userLearningLangs'
 
-    langCode = Column(String(500), ForeignKey('languages.langCode'), primary_key=True)
-    userId = Column(Integer, ForeignKey('users.userCode'), primary_key=True)
+    # langId = Column(Integer, ForeignKey('language.langId'), primary_key=True)
+    # userId = Column(Integer, ForeignKey('users.userId'), primary_key=True)
+    langId = Column(Integer, primary_key=True)
+    userId = Column(Integer, primary_key=True)
     langLevel = Column(Integer, nullable=True)

@@ -4,5 +4,5 @@ from app.database import Base
 class Interest(Base):
     __tablename__ = 'interest'
 
-    interCode = Column(Integer, primary_key=True, index=True)
-    interName = Column(String(500), nullable=False)
+    interestId = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    interestName = Column(String(20), nullable=False)
