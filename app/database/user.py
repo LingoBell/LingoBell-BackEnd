@@ -3,6 +3,7 @@ from app.database import Base
 
 class User(Base):
     __tablename__ = 'users'
+    
     userId = Column(Integer, primary_key=True, autoincrement=True)
     userCode = Column(String(50), unique=True, index=True)
     userName = Column(String(500), unique=True, index=True)

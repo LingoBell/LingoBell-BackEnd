@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from app.services.user_service import get_request_user_list_data, get_user_list_data,add_user_profile_data
+from app.services.user_service import get_request_user_list_data, get_user_list_data, add_user_profile_data
 from app.database import SessionLocal
 
 router = APIRouter()
