@@ -9,6 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db
+from app.controllers import transcribe_controller
 from app.routes import chat_routes, user_routes
 import uvicorn
 from fastapi.middleware import Middleware
@@ -16,7 +17,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
 
+
 app = FastAPI()
+transcription_result = ""
 security = HTTPBearer()
 
 origins = [
@@ -100,11 +103,9 @@ class AuthMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         return response
 
-
 app.add_middleware(
     AuthMiddleware
 )
-
 
 @app.on_event("startup")
 def on_startup():
@@ -144,9 +145,10 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     data = request.state.user
     print(request.state.user)
     return data
+
+app.include_router(transcribe_controller.router, prefix="/transcribe", tags=["transcribe"])
 app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
 app.include_router(user_routes.router, prefix="/users", tags=["users"]) 
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
