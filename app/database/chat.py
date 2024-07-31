@@ -5,9 +5,10 @@ class ChatRoom(Base):
     __tablename__ = 'chatRooms'
 
     chatRoomId = Column(Integer, primary_key=True, index=True)
-    accessStatus = Column(Boolean, nullable=False)
+    accessStatus = Column(Integer, nullable=False, default=1)
     chatName = Column(String(500), nullable=False)
     chatRoomDescript = Column(String(500), nullable=True)
     chatContents = Column(BLOB, nullable=True)
     userId = Column(Integer, ForeignKey('users.userCode'), nullable=False)
-    partnerId = Column(Integer, ForeignKey('users.userCode'), nullable=False) # 정희님, partnerId의 foreignKey 설정 확인해주세요.
+    partnerId = Column(Integer, ForeignKey('users.userCode'), nullable=False)
+    joinStatus = Column(Integer, nullable=False, default=1)
