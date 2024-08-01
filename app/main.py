@@ -150,9 +150,9 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
 
 
 
-app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"]) #transcription라우트 합쳐주세요
+app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
-app.include_router(partners_controller.router  , prefix="/api/partners", tags=["partners"])
+app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
 
 
 
