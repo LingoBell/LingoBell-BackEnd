@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data
+from app.services.user_service import get_request_user_list_data, get_user_list_data, add_user_profile_data, get_user_existance
 
 router = APIRouter()
 
-@router.post("/setUserProfile")
+@router.post("/users") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     if not uid:
@@ -21,4 +21,11 @@ async def create_user_profile(request : Request, db: Session = Depends(get_db)):
 
     # print('User_Profile',form_data)
     # print('UID',request.state.user['uid'])
-    
+
+@router.get('/check')# 유저 존재 유무 판별
+def check_first_time(request: Request, db: Session = Depends(get_db)):
+    # 최초 접근 유저인지 여부 (user 테이블에 존재하는가)
+    print(request.state.user.get('uid'))
+    uid = request.state.user.get('uid')
+    result = get_user_existance(db, uid)
+    return { "result": result }
