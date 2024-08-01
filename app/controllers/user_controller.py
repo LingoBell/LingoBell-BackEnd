@@ -2,17 +2,12 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from app.services.user_service import get_request_user_list_data, get_user_list_data, add_user_profile_data
+from app.services.user_service import get_request_user_list_data, get_user_list_data, add_user_profile_data, get_user_existance
 from app.database import SessionLocal
+from app.database import get_db
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/partners")
 def get_user_list(db: Session = Depends(get_db)):
@@ -30,7 +25,7 @@ def get_request_user_list(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Request UserList not found")
     return user_data
 
-@router.post("/setUserProfile")
+@router.post("/users") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     if not uid:
@@ -46,4 +41,11 @@ async def create_user_profile(request : Request, db: Session = Depends(get_db)):
 
     # print('User_Profile',form_data)
     # print('UID',request.state.user['uid'])
-    
+
+@router.get('/check')# 유저 존재 유무 판별
+def check_first_time(request: Request, db: Session = Depends(get_db)):
+    # 최초 접근 유저인지 여부 (user 테이블에 존재하는가)
+    print(request.state.user.get('uid'))
+    uid = request.state.user.get('uid')
+    result = get_user_existance(db, uid)
+    return { "result": result }
