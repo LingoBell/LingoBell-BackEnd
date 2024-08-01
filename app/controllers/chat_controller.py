@@ -9,6 +9,11 @@ from app.database import get_db
 
 router = APIRouter()
 
+@router.put("/{chatRoomId}/vacancy")
+def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
+    print('상태', chat_room_id)
+    return update_live_chat_status(db, chat_room_id)
+
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
     chat_data = get_live_chat_data(db, chat_room_id)
@@ -20,11 +25,6 @@ def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
 def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
-
-@router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    return update_live_chat_status(db, chat_room_id)
-
 
 @router.put("/liveChat/{chat_room_id}")
 def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):

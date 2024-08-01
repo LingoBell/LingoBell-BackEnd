@@ -32,7 +32,7 @@ def get_request_user_list_data(db: Session, uid: str):
             'userCode': users.userCode,
             'profileImages': users.profileImages,
             'description': users.description,
-            'nation': users.nation,
+            'nation': users.nation
         }
         print('결과', result)
         result_list.append(result)
