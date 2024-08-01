@@ -11,5 +11,4 @@ from app.database.notification import Notification
 from app.database.chatmessage import ChatMessage
 from app.database.aimessage import AIMessage
 from app.database.userlearninglangs import UserLearningLang
-from app.database.userlangs import UserLang
 from app.database.userinterests import UserInterest
