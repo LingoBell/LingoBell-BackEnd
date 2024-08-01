@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status
@@ -7,6 +8,7 @@ from datetime import datetime
 from app.database import get_db
 
 router = APIRouter()
+
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
     chat_data = get_live_chat_data(db, chat_room_id)
@@ -39,37 +41,35 @@ def create_translation(chat_room_id: int, original_text: str, db: Session = Depe
     save_to_db(db, chat_room_id, original_text, translated_text)
     return {"original_text": original_text, "translated_text": translated_text}
 
-@router.post("/{chat_room_id}/tts")
-def create_tts(chat_room_id: int, db: Session = Depends(get_db)):
-    pass
-
 @router.get("/{chat_room_id}/stt")
-def get_stt(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
-    messages = db.query(ChatMessage).filter(
-        ChatMessage.chatRoomId == chat_room_id,
-        ChatMessage.messageTime > timestamp
-    ).all()
+def get_stt(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+    query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
+    if timestamp:
+        query = query.filter(ChatMessage.messageTime > timestamp)
+    messages = query.all()
     response_data = [
         {
             "type": "me" if message.messageSenderId == 1 else "partner",
             "messageSenderId": message.messageSenderId,
-            "originalMessage": message.originalMessage
-        } for message in messages if message.originalMessage
+            "originalMessage": message.originalMessage,
+            "translatedMessage": message.translatedMessage
+        } for message in messages
     ]
     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/translations")
-def get_translations(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
-    messages = db.query(ChatMessage).filter(
-        ChatMessage.chatRoomId == chat_room_id,
-        ChatMessage.messageTime > timestamp
-    ).all()
+def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+    query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
+    if timestamp:
+        query = query.filter(ChatMessage.messageTime > timestamp)
+    messages = query.all()
     response_data = [
         {
             "type": "me" if message.messageSenderId == 1 else "partner",
             "messageSenderId": message.messageSenderId,
+            "originalMessage": message.originalMessage,
             "translatedMessage": message.translatedMessage
-        } for message in messages if message.translatedMessage
+        } for message in messages
     ]
     return {"messages": response_data}
 
