@@ -11,8 +11,7 @@ import app.connection.firebase_config
 from app.database import init_db
 
 from app.controllers.auth_router import router as auth_router
-from app.controllers import transcribe_controller
-from app.routes import chat_routes, user_routes
+from app.controllers import chat_controller, user_controller, partners_controller
 
 import uvicorn
 from fastapi.middleware import Middleware
@@ -115,7 +114,7 @@ def on_startup():
     init_db()
 
 # # 구글 로그인 요청 endpoint
-@app.post("/verify-token")
+@app.post("/api/verify-token")
 async def verify_token_endpoint(request: Request):
     data = await request.json()
     id_token = data.get('idToken')
@@ -151,12 +150,13 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
 
 
 
-app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
-app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"]) #transcription라우트 합쳐주세요
+app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
+app.include_router(partners_controller.router  , prefix="/api/partners", tags=["partners"])
 
-app.include_router(transcribe_controller.router, prefix="/transcribe", tags=["transcribe"])
-app.include_router(chat_routes.router, prefix="/chats", tags=["chats"])
-app.include_router(user_routes.router, prefix="/users", tags=["users"]) 
+
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

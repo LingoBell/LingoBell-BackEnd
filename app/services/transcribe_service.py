@@ -5,9 +5,17 @@ import whisper
 from datetime import datetime, timedelta
 from queue import Queue
 from tempfile import NamedTemporaryFile
-from time import sleep
+from dotenv import load_dotenv
+import requests
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.database.models import ChatMessage
 
-def transcribe_audio(model_name="base", non_english=True, energy_threshold=300, record_timeout=2.0, phrase_timeout=3.0):
+load_dotenv()
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+def transcribe_audio(db: Session, model_name="base", non_english=True, energy_threshold=300, record_timeout=2.0, phrase_timeout=3.0):
     model = model_name
     if model_name != "large" and not non_english:
         model = model + ".en"
@@ -66,14 +74,37 @@ def transcribe_audio(model_name="base", non_english=True, energy_threshold=300, 
                 for line in transcription:
                     print(line)
                 print('', end='', flush=True)
-                
-                with open("transcription.txt", "w") as txt_file:
-                    txt_file.write("\n".join(transcription))
 
-                sleep(0.25)
+                translated_text = translate_text(text, target='en')
+                save_to_db(db, text, translated_text)
+
         except KeyboardInterrupt:
             break
 
     final_transcription = "\n".join(transcription)
     return final_transcription
 
+def translate_text(text, target):
+    url = "https://translation.googleapis.com/language/translate/v2"
+    params = {
+        'q': text,
+        'target': target,
+        'key': GOOGLE_API_KEY
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+          return response.json()['data']['translations'][0]['translatedText']
+    else:
+        raise Exception(f"Error: {response.status_code}, {response.text}")
+    
+def save_to_db(db: Session, original_message: str, translated_message: str):
+    new_message = ChatMessage(
+        originalMessage=original_message,
+        translatedMessage=translated_message,
+        messageSenderId=1,  # userCode로 변경해야함. 일단은 1로 박아놓음.
+        messageTime=datetime.utcnow(),
+        chatRoomId=32  
+    )
+    db.add(new_message)
+    db.commit()
+    db.refresh(new_message)
