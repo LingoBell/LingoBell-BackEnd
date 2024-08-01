@@ -5,6 +5,29 @@ from app.services.user_service import add_user_profile_data, get_user_existance
 
 router = APIRouter()
 
+<<<<<<< Updated upstream
+=======
+
+@router.get("/partners")
+def get_user_list(db: Session = Depends(get_db)):
+    user_data = get_user_list_data(db)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="UserList not found")
+    return user_data
+
+@router.get("/requestPartners")
+def get_request_user_list(request: Request, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    print('state   ', uid)
+    user_data = get_request_user_list_data(db, uid)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Request UserList not found")
+    return user_data
+
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 @router.post("/") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']

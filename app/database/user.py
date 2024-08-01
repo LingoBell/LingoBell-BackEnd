@@ -14,4 +14,3 @@ class User(Base):
     nation = Column(String(4))
     # nation = Column(String(4), ForeignKey('nation.nationId'))
     profileImages = Column(String(255), nullable=True)
-
