@@ -4,15 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status
 from app.database import SessionLocal
+from app.database import get_db
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.get("/liveChat/{chat_room_id}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
