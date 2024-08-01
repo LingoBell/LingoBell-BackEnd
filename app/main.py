@@ -9,8 +9,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db
-
-from app.controllers.auth_router import router as auth_router
 from app.controllers import chat_controller, user_controller, partners_controller
 
 import uvicorn
@@ -107,7 +105,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(
     AuthMiddleware
-)
+)   
 
 @app.on_event("startup")
 def on_startup():

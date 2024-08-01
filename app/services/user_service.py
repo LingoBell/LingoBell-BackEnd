@@ -5,6 +5,15 @@ from app.database.models import User, ChatRoom, UserLearningLang
 from app.database import SessionLocal
 
 
+#유저 존재 유무 판별
+def get_user_existance(db: Session, uid):
+    user = db.query(User).filter(User.userCode == uid).first()
+    print(user)
+    if user is not None:
+        return False
+    else:
+        return True
+
 def add_user_profile_data(db : Session, uid : str, form_data : dict):    
     try:
         user_profile = User(
@@ -18,9 +27,9 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
         db.add(user_profile)
         db.commit()
         db.refresh(user_profile)
-
+        print('success db')
         user = db.query(User).filter(User.userCode == uid).first()
-        
+        print('user!!:',user)
         return user_profile
     except Exception as e:
         db.rollback()
