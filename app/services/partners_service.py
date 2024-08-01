@@ -27,15 +27,12 @@ def get_request_user_list_data(db: Session, uid: str):
     for chatrooms, users in results:
         result = {
             'chatRoomId': chatrooms.chatRoomId,
-            'chatRoomName': chatrooms.chatName,
-            'chatRoomDescript': chatrooms.chatRoomDescript,
             'userId': users.userId,
             'userName': users.userName,
             'userCode': users.userCode,
             'profileImages': users.profileImages,
             'description': users.description,
-            'nation': users.nation,
-            'email': users.email
+            'nation': users.nation
         }
         print('결과', result)
         result_list.append(result)

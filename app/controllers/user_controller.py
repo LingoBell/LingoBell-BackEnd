@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import get_request_user_list_data, get_user_list_data, add_user_profile_data, get_user_existance
+from app.services.user_service import add_user_profile_data, get_user_existance
 
 router = APIRouter()
 
-@router.post("/users") #유저 정보 저장
+@router.post("/") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     if not uid:

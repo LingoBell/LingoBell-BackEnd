@@ -19,9 +19,6 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
 
     db_chat_room = ChatRoom(
         accessStatus=chat_room['accessStatus'],
-        chatName=chat_room['chatName'],
-        chatRoomDescript=chat_room['chatRoomDescript'],
-        chatContents=chat_room['chatContents'],
         userId=userId,
         partnerId=chat_room['partnerId'],
     )
