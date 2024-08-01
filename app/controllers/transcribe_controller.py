@@ -1,24 +1,25 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from app.services.transcribe_service import transcribe_audio
-import os
-
+from app.database import get_db
+from app.database.models import ChatMessage
 
 router = APIRouter()
 
-@router.get("/start_transcription")
-def start_transcription():
-    transcription_result = transcribe_and_get_result()
+@router.get("/start")
+def start_transcription(db: Session = Depends(get_db)):
+    transcription_result = transcribe_audio(db)
     return {"transcription": transcription_result}
 
-def transcribe_and_get_result():
-    transcription_result = transcribe_audio()
-    return transcription_result
-
-@router.get("/get_latest_transcription")
-def get_latest_transcription():
-    if os.path.exists("transcription.txt"):
-        with open("transcription.txt", "r") as txt_file:
-            transcription = txt_file.read()
-        return {"transcription": transcription}
-    else:
-        return {"transcription": "Transcription not found"}
+@router.get("/chatmessages")
+def get_chatmessages(db: Session = Depends(get_db)):
+    messages = db.query(ChatMessage).all()
+    response_data = [
+        {
+            "type": "me",
+            "messageSenderId": message.messageSenderId,
+            "originalMessage": message.originalMessage,
+            "translatedMessage": message.translatedMessage
+        } for message in messages
+    ]
+    return {"messages": response_data}
