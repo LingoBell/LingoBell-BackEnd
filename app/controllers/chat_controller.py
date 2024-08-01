@@ -27,19 +27,23 @@ def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
     return update_live_chat_status(db, chat_room_id)
 
 
-@router.post("/{chat_room_id}/translations")
-def create_translation(chat_room_id: int, db: Session = Depends(get_db)):
-    transcription_result = transcribe_audio(db, chat_room_id)
-    return {"transcription": transcription_result}
+@router.put("/liveChat/{chat_room_id}")
+def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
+    return update_live_chat_status(db, chat_room_id)
 
 @router.post("/{chat_room_id}/stt")
 def create_stt(chat_room_id: int, db: Session = Depends(get_db)):
     transcription_result = transcribe_audio(db, chat_room_id)
     return {"transcription": transcription_result}
 
+@router.post("/{chat_room_id}/translations")
+def create_translation(chat_room_id: int, original_text: str, db: Session = Depends(get_db)):
+    translated_text = translate_text(original_text, target='en')
+    save_to_db(db, chat_room_id, original_text, translated_text)
+    return {"original_text": original_text, "translated_text": translated_text}
+
 @router.post("/{chat_room_id}/tts")
 def create_tts(chat_room_id: int, db: Session = Depends(get_db)):
-    
     pass
 
 @router.get("/{chat_room_id}/stt")
@@ -52,9 +56,8 @@ def get_stt(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db
         {
             "type": "me" if message.messageSenderId == 1 else "partner",
             "messageSenderId": message.messageSenderId,
-            "originalMessage": message.originalMessage,
-            "translatedMessage": message.translatedMessage
-        } for message in messages
+            "originalMessage": message.originalMessage
+        } for message in messages if message.originalMessage
     ]
     return {"messages": response_data}
 
@@ -68,9 +71,8 @@ def get_translations(chat_room_id: int, timestamp: datetime, db: Session = Depen
         {
             "type": "me" if message.messageSenderId == 1 else "partner",
             "messageSenderId": message.messageSenderId,
-            "originalMessage": message.originalMessage,
             "translatedMessage": message.translatedMessage
-        } for message in messages
+        } for message in messages if message.translatedMessage
     ]
     return {"messages": response_data}
 
