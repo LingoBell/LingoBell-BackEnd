@@ -15,7 +15,7 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-def transcribe_audio(db: Session, model_name="base", non_english=True, energy_threshold=300, record_timeout=2.0, phrase_timeout=3.0):
+def transcribe_audio(db: Session, chat_room_id: int, model_name="base", non_english=True, energy_threshold=1000, record_timeout=2.0, phrase_timeout=3.0):
     model = model_name
     if model_name != "large" and not non_english:
         model = model + ".en"
@@ -76,7 +76,7 @@ def transcribe_audio(db: Session, model_name="base", non_english=True, energy_th
                 print('', end='', flush=True)
 
                 translated_text = translate_text(text, target='en')
-                save_to_db(db, text, translated_text)
+                save_to_db(db, chat_room_id, text, translated_text)
 
         except KeyboardInterrupt:
             break
@@ -97,13 +97,13 @@ def translate_text(text, target):
     else:
         raise Exception(f"Error: {response.status_code}, {response.text}")
     
-def save_to_db(db: Session, original_message: str, translated_message: str):
+def save_to_db(db: Session, chat_room_id: int, original_message: str, translated_message: str):
     new_message = ChatMessage(
         originalMessage=original_message,
         translatedMessage=translated_message,
         messageSenderId=1,  # userCode로 변경해야함. 일단은 1로 박아놓음.
         messageTime=datetime.utcnow(),
-        chatRoomId=32  
+        chatRoomId=chat_room_id
     )
     db.add(new_message)
     db.commit()
