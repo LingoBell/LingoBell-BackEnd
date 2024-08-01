@@ -1,5 +1,3 @@
-# 비즈니스 로직을 처리하는 서비스 레이어
-
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.database.models import ChatRoom, User
@@ -39,4 +37,3 @@ def update_live_chat_status(db: Session, chat_room_id: int):
     db.commit()
     print("update된 chat_room", chat_room)
 
-    
