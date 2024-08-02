@@ -5,4 +5,4 @@ class Nation(Base):
     __tablename__ = 'nation'
 
     nationId = Column(String(4), primary_key=True, index=True)
-    nationName = Column(String(20), nullable=False)
+    nationName = Column(String(50), nullable=False)

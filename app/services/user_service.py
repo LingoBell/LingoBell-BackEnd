@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.database.models import User
+from app.database.models import User, UserInterest, UserLearningLang
 from app.database import SessionLocal
 
 #유저 존재 유무 판별
@@ -17,28 +17,46 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
         user_profile = User(
             userCode=uid,
             userName=form_data['name'],
-            # birthday = form_data['birtday'],
+            # birthday = form_data['birtday'], 후순위
             gender=form_data['gender'],
             description=form_data['userIntroduce'],
-            # nativeLanguage = form_data['nativeLanguage']
-            # nation=form_data.get('nation', {}).get('label')
-
+            nativeLanguage = form_data['mainLanguage'],
+            nation=form_data.get('nation', {}).get('value')
             # profileImages = form_data_['profileImg']
         )
         db.add(user_profile)
         db.commit()
         db.refresh(user_profile)
 
-       
-        print('success db')
-        user = db.query(User).filter(User.userCode == uid).first()
-        print('user!!:',user)
+        print('added user data')
 
-        user_learning_language = UserLearningLang(
-            langLevel = form_data['레벨값'],
-            langId = form_data['언어아이디'],
-            userId = user.userId
-        )
+        user = db.query(User).filter(User.userCode == uid).first()
+        userId = user.userId
+
+        for interest in form_data['selectedInterests'].values():
+            interest_id = interest['interestId']
+            user_interest = UserInterest(
+                userId = userId,
+                interestId = interest_id
+            )
+            db.add(user_interest)
+        db.commit()
+        db.refresh(user_interest)
+        print('added user interest data')
+
+        for learningLang in form_data['languageWithLevel'].values():
+            langId = learningLang['langId']
+            level = learningLang['level']
+            user_learning_lang = UserLearningLang(
+                langId = langId,
+                userId = userId,
+                langLevel = level
+            )
+            db.add(user_learning_lang)
+        db.commit()
+        db.refresh(user_learning_lang)
+        print('added user_learning_lang data')
+
 
         return user_profile
     except Exception as e:
