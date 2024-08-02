@@ -17,6 +17,7 @@ def get_user_list_data(db: Session):
         User.gender.label('gender'),
         User.description.label('description'),
         User.nativeLanguage.label('nativeLanguage'),
+        User.profileImages.label('profileImages'),
         NationAlias.nationName.label('nationName'),
         LearningLangAlias.langLevel.label('langLevel'),
         LanguageAlias.language.label('language'),
@@ -44,6 +45,7 @@ def get_user_list_data(db: Session):
                 'gender': row.gender,
                 'description': row.description,
                 'nativeLanguage': row.nativeLanguage,
+                'profileImages': row.profileImages,
                 'nationName': row.nationName,
                 'learningLanguages': [],
                 'interests': []
