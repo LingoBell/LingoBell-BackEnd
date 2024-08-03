@@ -19,7 +19,7 @@ def get_user_list_data(db: Session):
         User.description.label('description'),
         User.nativeLanguage.label('nativeLanguage'),
         User.profileImages.label('profileImages'),
-        NationAlias.nationName.label('nationName'),
+        User.nation.label('nation'),
         LearningLangAlias.langLevel.label('langLevel'),
         LanguageAlias.language.label('language'),
         InterestAlias.interestName.label('interestName')
@@ -31,8 +31,6 @@ def get_user_list_data(db: Session):
         UserInterest, User.userId == UserInterest.userId, isouter=True
     ).join(
         InterestAlias, UserInterest.interestId == InterestAlias.interestId, isouter=True
-    ).join(
-        NationAlias, User.nation == NationAlias.nationId, isouter=True
     ).all()
     
     user_data = {}
@@ -48,7 +46,7 @@ def get_user_list_data(db: Session):
                 'description': row.description,
                 'nativeLanguage': row.nativeLanguage,
                 'profileImages': row.profileImages,
-                'nationName': row.nationName,
+                'nation' : row.nation,
                 'learningLanguages': [],
                 'interests': []
             }
