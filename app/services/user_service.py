@@ -17,7 +17,7 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
         user_profile = User(
             userCode=uid,
             userName=form_data['name'],
-            # birthday = form_data['birtday'], 후순위
+            birthday = form_data['birthday'],
             gender=form_data['gender'],
             description=form_data['userIntroduce'],
             nativeLanguage = form_data['mainLanguage'],
