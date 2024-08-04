@@ -44,7 +44,7 @@ def get_user_interests(db: Session, user_id: int):
     interest_names = [db.query(Interest).filter(Interest.interestId == interest.interestId).first().interestName for interest in user_interests]
     return interest_names
 
-def get_topic_recommendations_for_chat(db: Session, chat_room_id: int):
+def get_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -55,8 +55,24 @@ def get_topic_recommendations_for_chat(db: Session, chat_room_id: int):
     if not user or not partner:
         raise HTTPException(status_code=404, detail="User or Partner not found")
 
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="Current user not found")
+
     user_interests = get_user_interests(db, user.userId)
     partner_interests = get_user_interests(db, partner.userId)
+
+    #호출하는 유저에 따라 출력되는 언어가 바뀌어야함
+    if current_user.userId == user.userId:
+        user_a = user
+        user_b = partner
+        user_a_interests = user_interests
+        user_b_interests = partner_interests
+    else:
+        user_a = partner
+        user_b = user
+        user_a_interests = partner_interests
+        user_b_interests = user_interests
 
     #user_content 및 partner_content로 수정해야함
     user_a_content = "Hi!"
@@ -65,21 +81,22 @@ def get_topic_recommendations_for_chat(db: Session, chat_room_id: int):
     user_input = UserTopicInput(
         user_a_content=user_a_content,
         user_b_content=user_b_content,
-        user_a_interests=user_interests,
-        user_b_interests=partner_interests,
-        user_a_lang=user.nativeLanguageCode,
-        user_b_lang=partner.nativeLanguageCode
+        user_a_interests=user_a_interests,
+        user_b_interests=user_b_interests,
+        user_a_lang=user_a.nativeLanguageCode,
+        user_b_lang=user_b.nativeLanguageCode,
     )
 
     recommendations = get_topic_recommendations(user_input)
 
-    save_recommendations_to_db(db, chat_room_id, recommendations["user_a_recommend"])
+    save_recommendations_to_db(db, chat_room_id, current_user.userId, recommendations["user_a_recommend"])
     return recommendations
 
-def save_recommendations_to_db(db: Session, chat_room_id: int, recommendations: list):
+def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, recommendations: list):
     for recommendation in recommendations:
         ai_recommend = AiRecommend(
             chatRoomId=chat_room_id,
+            userId = user_id,
             aiRecommendation=recommendation,
             aiRecommendDate=datetime.utcnow()
         )
@@ -87,7 +104,7 @@ def save_recommendations_to_db(db: Session, chat_room_id: int, recommendations: 
     db.commit()
 
 
-def get_quiz_recommendations_for_chat(db: Session, chat_room_id: int):
+def get_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -98,23 +115,40 @@ def get_quiz_recommendations_for_chat(db: Session, chat_room_id: int):
     if not user or not partner:
         raise HTTPException(status_code=404, detail="User or Partner not found")
 
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="Current user not found")
+
+
     user_interests = get_user_interests(db, user.userId)
+    partner_interests = get_user_interests(db, partner.userId)
+
+        #호출하는 유저에 따라 출력되는 언어가 바뀌어야함
+    if current_user.userId == user.userId:
+        user_a = user
+        user_b = partner
+        user_a_interests = user_interests
+    else:
+        user_a = partner
+        user_b = user
+        user_a_interests = partner_interests
 
     user_input = UserQuizInput(
-        user_a_lang=user.nativeLanguageCode,
-        user_b_lang=partner.nativeLanguageCode,
-        user_a_interests=user_interests
+        user_a_lang=user_a.nativeLanguageCode,
+        user_b_lang=user_b.nativeLanguageCode,
+        user_a_interests=user_a_interests,
     )
 
     quiz = get_quiz_recommendations(user_input)
     
-    save_quizzes_to_db(db, chat_room_id, quiz["user_a_quiz"])
+    save_quizzes_to_db(db, chat_room_id, current_user.userId, quiz["user_a_quiz"])
     return quiz
 
-def save_quizzes_to_db(db: Session, chat_room_id: int, quizzes: list):
+def save_quizzes_to_db(db: Session, chat_room_id: int, user_id : int, quizzes: list):
     for quiz in quizzes:
         ai_quiz = AiQuiz(
             chatRoomId=chat_room_id,
+            userId = user_id,
             aiQuestion=quiz["quiz"]["question"],
             aiAnswer=quiz["quiz"]["answer"],
             aiReason=quiz["quiz"]["reason"],
