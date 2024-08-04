@@ -5,6 +5,7 @@ from app.services.user_service import add_user_profile_data, get_user_existance
 
 router = APIRouter()
 
+
 @router.post("/") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
@@ -28,4 +29,5 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
     print(request.state.user.get('uid'))
     uid = request.state.user.get('uid')
     result = get_user_existance(db, uid)
+    print("첫 로그인인가?",result)
     return { "result": result }

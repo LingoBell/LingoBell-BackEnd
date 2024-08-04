@@ -6,6 +6,7 @@ class AiQuiz(Base):
 
     aiQuizId = Column(Integer, primary_key=True, index=True, autoincrement=True)
     chatRoomId = Column(Integer, nullable=False)
+    userId = Column(Integer, nullable=False) #개인화된 기록을 위함
     # chatRoomId = Column(Integer, ForeignKey('chatRooms.chatRoomId'), nullable=False)
     aiQuestion = Column(String(255), nullable=False)
     aiAnswer = Column(String(2), nullable=False)

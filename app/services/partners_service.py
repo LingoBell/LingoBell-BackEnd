@@ -1,11 +1,67 @@
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.database.models import ChatRoom, User
+from sqlalchemy.orm import aliased
+from app.database.models import ChatRoom, User, UserLearningLang, Language, UserInterest, Interest, Nation
 from app.database import SessionLocal
 
 def get_user_list_data(db: Session):
-    return db.query(User).all()
+    LearningLangAlias = aliased(UserLearningLang)
+    LanguageAlias = aliased(Language)
+    InterestAlias = aliased(Interest)
+    NationAlias = aliased(Nation)
+
+    results = db.query(
+        User.userId.label('userId'),
+        User.userName.label('userName'),
+        User.gender.label('gender'),
+        User.birthday.label('birthday'),
+        User.description.label('description'),
+        User.nativeLanguage.label('nativeLanguage'),
+        User.profileImages.label('profileImages'),
+        User.nation.label('nation'),
+        LearningLangAlias.langLevel.label('langLevel'),
+        LanguageAlias.language.label('language'),
+        InterestAlias.interestName.label('interestName')
+    ).join(
+        LearningLangAlias, User.userId == LearningLangAlias.userId, isouter=True
+    ).join(
+        LanguageAlias, LearningLangAlias.langId == LanguageAlias.langId, isouter=True
+    ).join(
+        UserInterest, User.userId == UserInterest.userId, isouter=True
+    ).join(
+        InterestAlias, UserInterest.interestId == InterestAlias.interestId, isouter=True
+    ).all()
+    
+    user_data = {}
+    
+    for row in results:
+        user_id = row.userId
+        if user_id not in user_data:
+            user_data[user_id] = {
+                'userId': row.userId,
+                'userName': row.userName,
+                'gender': row.gender,
+                'birthday' : row.birthday,
+                'description': row.description,
+                'nativeLanguage': row.nativeLanguage,
+                'profileImages': row.profileImages,
+                'nation' : row.nation,
+                'learningLanguages': [],
+                'interests': []
+            }
+        
+        # Check for duplicates before adding learning languages
+        learning_language = {'language': row.language, 'langLevel': row.langLevel}
+        if learning_language not in user_data[user_id]['learningLanguages']:
+            user_data[user_id]['learningLanguages'].append(learning_language)
+        
+        # Check for duplicates before adding interests
+        if row.interestName and row.interestName not in user_data[user_id]['interests']:
+            user_data[user_id]['interests'].append(row.interestName)
+    
+    return list(user_data.values())
+
 
 def get_request_user_list_data(db: Session, uid: str):
     user = db.query(User).filter(User.userCode == uid).first()
