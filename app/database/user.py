@@ -11,6 +11,7 @@ class User(Base):
     gender = Column(String(20))
     description = Column(String(255))
     nativeLanguage = Column(String(20))
+    nativeLanguageCode = Column(String(4))
     nation = Column(String(4))
     # nation = Column(String(4), ForeignKey('nation.nationId'))
     profileImages = Column(String(255), nullable=True)

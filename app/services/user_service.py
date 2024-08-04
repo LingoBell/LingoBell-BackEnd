@@ -21,7 +21,8 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
             gender=form_data['gender'],
             description=form_data['userIntroduce'],
             nativeLanguage = form_data['mainLanguage'],
-            nation=form_data.get('nation', {}).get('value')
+            nation=form_data.get('nation', {}).get('value'),
+            nativeLanguageCode = form_data['nativeLanguageCode']
             # profileImages = form_data_['profileImg']
         )
         db.add(user_profile)

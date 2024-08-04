@@ -29,4 +29,5 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
     print(request.state.user.get('uid'))
     uid = request.state.user.get('uid')
     result = get_user_existance(db, uid)
+    print("첫 로그인인가?",result)
     return { "result": result }
