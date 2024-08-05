@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data
 
 router = APIRouter()
 
@@ -31,3 +31,10 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
     result = get_user_existance(db, uid)
     print("첫 로그인인가?",result)
     return { "result": result }
+
+@router.get('/{uid}')
+def get_user_profile(request: Request, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    print("get_user_profile uid", uid)
+    user_profile_data = get_user_profile_data(db, uid)
+    return user_profile_data

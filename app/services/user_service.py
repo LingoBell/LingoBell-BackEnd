@@ -64,3 +64,8 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
         db.rollback()
         print('ERROR')
         raise HTTPException(status_code=400, detail=str(e))
+    
+def get_user_profile_data(db: Session, uid: str):
+    user = db.query(User).filter(User.userCode == uid).first()
+    print("서비스에서 get_user_profile user info", user)
+    return user
