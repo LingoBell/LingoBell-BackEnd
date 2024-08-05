@@ -6,8 +6,9 @@ from app.services.partners_service import get_request_user_list_data, get_user_l
 router = APIRouter()
 
 @router.get("/")
-def get_user_list(db: Session = Depends(get_db)):
-    user_data = get_user_list_data(db)
+def get_user_list(request : Request, db: Session = Depends(get_db)):
+    current_user_code = request.state.user['uid']
+    user_data = get_user_list_data(db, current_user_code)
     if not user_data:
         raise HTTPException(status_code=404, detail="UserList not found")
     return user_data
