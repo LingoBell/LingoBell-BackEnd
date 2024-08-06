@@ -72,6 +72,8 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
     
 def get_user_profile_data(db: Session, uid: str):
     user = db.query(User).filter(User.userCode == uid).first()
+    if not user:
+        return None
     print('dddd',user)
     user_interests = db.query(UserInterest).filter(UserInterest.userId == user.userId).all()
     
