@@ -1,7 +1,12 @@
-from fastapi import HTTPException
+import os
+from google.cloud import storage
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.database.models import User, UserInterest, UserLearningLang, Language
 from app.database import SessionLocal
+from dotenv import load_dotenv
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 #유저 존재 유무 판별
 def get_user_existance(db: Session, uid):
@@ -67,7 +72,7 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
     
 def get_user_profile_data(db: Session, uid: str):
     user = db.query(User).filter(User.userCode == uid).first()
-
+    print('dddd',user)
     user_interests = db.query(UserInterest).filter(UserInterest.userId == user.userId).all()
     
     user_learning_langs = db.query(UserLearningLang, Language).join(
@@ -150,3 +155,22 @@ def update_user_profile_data(db: Session, uid: str, form_data: dict):
         db.rollback()
         print('ERROR:', str(e))
         raise HTTPException(status_code=400, detail=str(e))
+
+def upload_to_gcs(bucket_name: str, source_file: UploadFile, destination_blob_name: str) -> str:
+    #이미지 GCS에 업로드
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_file(source_file.file)
+    return blob.public_url
+
+def save_image_url_to_user(db: Session, user_id: int, image_url: str):
+    #이미지url db저장
+    user = db.query(User).filter(User.userId == user_id).first()
+    if not user:
+        raise ValueError("User not found")
+    
+    user.profileImages = image_url
+    db.commit()
+    db.refresh(user)
+    return user
