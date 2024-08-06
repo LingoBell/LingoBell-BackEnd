@@ -43,7 +43,6 @@ def get_user_list_data(db: Session, current_user_code : str):
     ).all()
     
     user_data = {}
-    
     for row in results:
         user_id = row.userId
         if user_id not in user_data:
@@ -60,15 +59,17 @@ def get_user_list_data(db: Session, current_user_code : str):
                 'interests': []
             }
         
-        # Check for duplicates before adding learning languages
-        learning_language = {'language': row.language, 'langLevel': row.langLevel}
-        if learning_language not in user_data[user_id]['learningLanguages']:
-            user_data[user_id]['learningLanguages'].append(learning_language)
+        if(row.language is not None and row.langLevel is not None):
+            # Check for duplicates before adding learning languages
+            learning_language = {'language': row.language, 'langLevel': row.langLevel}
+            if learning_language not in user_data[user_id]['learningLanguages']:
+                user_data[user_id]['learningLanguages'].append(learning_language)
+
+        if(row.interestName is not None):
+            # Check for duplicates before adding interests
+            if row.interestName and row.interestName not in user_data[user_id]['interests']:
+                user_data[user_id]['interests'].append(row.interestName)
         
-        # Check for duplicates before adding interests
-        if row.interestName and row.interestName not in user_data[user_id]['interests']:
-            user_data[user_id]['interests'].append(row.interestName)
-    
     return list(user_data.values())
 
 
@@ -152,14 +153,15 @@ def get_request_user_list_data(db: Session, uid: str):
                 'learningLanguages': [],
                 'interests': []
             }
+        if(row.language is not None and row.langLevel is not None):
+            # Check for duplicates before adding learning languages
+            learning_language = {'language': row.language, 'langLevel': row.langLevel}
+            if learning_language not in user_data[chat_room_id]['learningLanguages']:
+                user_data[chat_room_id]['learningLanguages'].append(learning_language)
         
-        # Check for duplicates before adding learning languages
-        learning_language = {'language': row.language, 'langLevel': row.langLevel}
-        if learning_language not in user_data[chat_room_id]['learningLanguages']:
-            user_data[chat_room_id]['learningLanguages'].append(learning_language)
-        
-        # Check for duplicates before adding interests
-        if row.interestName and row.interestName not in user_data[chat_room_id]['interests']:
-            user_data[chat_room_id]['interests'].append(row.interestName)
+        if(row.interestName is not None):
+            # Check for duplicates before adding interests
+            if row.interestName and row.interestName not in user_data[chat_room_id]['interests']:
+                user_data[chat_room_id]['interests'].append(row.interestName)
 
     return list(user_data.values())
