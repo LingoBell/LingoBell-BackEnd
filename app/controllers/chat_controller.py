@@ -1,18 +1,25 @@
+import base64
+from email.mime import audio
+import io
+import logging
+import os
+import shutil
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, requests
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
+from pydub import AudioSegment
 
 router = APIRouter()
 
 @router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    print('상태', chat_room_id)
-    return update_live_chat_status(db, chat_room_id)
+def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
+    print('상태', chatRoomId)
+    return update_live_chat_status(db, chatRoomId)
 
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
@@ -26,9 +33,6 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-@router.put("/liveChat/{chat_room_id}")
-def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    return update_live_chat_status(db, chat_room_id)
 
 @router.post("/{chat_room_id}/stt")
 def create_stt(chat_room_id: int, db: Session = Depends(get_db)):
@@ -73,6 +77,6 @@ def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db
     ]
     return {"messages": response_data}
 
-@router.get("/{chat_room_id}/tts")
-def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
-    pass
+# @router.get("/{chat_room_id}/tts")
+# def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
+#     pass

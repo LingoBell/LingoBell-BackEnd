@@ -40,7 +40,7 @@ app.add_middleware(
 def verify_token(auth_token: str): 
     try:
         decoded_token = auth.verify_id_token(auth_token)
-        print('decoded_token',decoded_token)
+        # print('decoded_token',decoded_token)
         return decoded_token
     except Exception as e:
         # return False
@@ -88,7 +88,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # 2. 토큰을 검증한다
         user_info = verify_token(token)
-        print('user_info:',user_info)
+        # print('user_info:',user_info)
 
         # 2-1. 검증에 실패하면 status를 403으로 반환한다  
         if user_info is None:
@@ -116,12 +116,12 @@ def on_startup():
 async def verify_token_endpoint(request: Request):
     data = await request.json()
     id_token = data.get('idToken')
-    print(data)
-    print(id_token)
+    # print(data)
+    # print(id_token)
     if not id_token:
         raise HTTPException(status_code=400, detail="ID token is required")
     decoded_token = verify_token(id_token)
-    print(decoded_token)
+    # print(decoded_token)
     return {"message": "Token is valid", "user_id": decoded_token["uid"]}
 
 # # Bearer 토큰을 HTTP 헤더에서 자동으로 추출하여 인증
@@ -143,7 +143,7 @@ async def verify_token_endpoint(request: Request):
 async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCredentials = Depends(security)는 --> 직접적으로 fastAPI의 의존성 주입을 통해 HTTP요청에서 'Authorization'헤더를 추출
     uid = request.state.user['uid']
     data = request.state.user
-    print(request.state.user)
+    # print(request.state.user)
     return data
 
 
