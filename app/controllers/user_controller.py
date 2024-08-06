@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data
 
 router = APIRouter()
 
@@ -28,4 +28,26 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
     print(request.state.user.get('uid'))
     uid = request.state.user.get('uid')
     result = get_user_existance(db, uid)
+    print("첫 로그인인가?",result)
     return { "result": result }
+
+@router.get('/my-profile')
+def get_my_profile(request: Request, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    user_profile_data = get_user_profile_data(db, uid)
+    return user_profile_data
+
+@router.get('/{uid}')
+def get_user_profile(request: Request, uid: str, db: Session = Depends(get_db)):
+    user_profile_data = get_user_profile_data(db, uid)
+    return user_profile_data
+
+@router.put('/my-profile')
+async def update_user_profile(request: Request, db: Session = Depends(get_db)):
+    try:
+        uid = request.state.user['uid']
+        form_data = await request.json()
+        updated_user_profile = update_user_profile_data(db, uid, form_data)
+        return {"updated_data": updated_user_profile}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

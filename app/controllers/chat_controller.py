@@ -7,12 +7,17 @@ import shutil
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, requests
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status
+from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
 from pydub import AudioSegment
+from app.ai_recommendation.recommend_input import UserTopicInput, UserQuizInput
+from starlette.responses import RedirectResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+security = HTTPBearer()
 
 router = APIRouter()
 
@@ -20,6 +25,11 @@ router = APIRouter()
 def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
     return update_live_chat_status(db, chatRoomId)
+
+@router.get('/')
+def get_live_chats(request: Request, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    return get_live_chat_list(db, uid)
 
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
@@ -77,6 +87,37 @@ def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db
     ]
     return {"messages": response_data}
 
-# @router.get("/{chat_room_id}/tts")
-# def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
-#     pass
+@router.get("/{chat_room_id}/tts")
+def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
+    pass
+
+# AI 주제추천
+@router.post("/{chat_room_id}/recommendations")
+def create_recommendations(request:Request ,chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_code = request.state.user['uid']
+    recommendations = create_topic_recommendations_for_chat(db, chat_room_id, user_code)
+    return recommendations
+
+# AI 퀴즈생성
+@router.post("/{chat_room_id}/quizzes")
+def create_quiz(request:Request, chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_code = request.state.user['uid']
+    quiz = create_quiz_recommendations_for_chat(db, chat_room_id, user_code)
+    return quiz
+
+@router.get("/{chat_room_id}/recommendations")
+def get_recommendations(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_code = request.state.user['uid']
+    recommendations = get_recommendations_for_chat(db, chat_room_id, user_code)
+    if not recommendations:
+        raise HTTPException(status_code=404, detail="Recommendations not found")
+    return recommendations
+
+@router.get("/{chat_room_id}/quizzes")
+def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    user_code = request.state.user['uid']
+    quiz = get_quiz_for_chat(db, chat_room_id, user_code)
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quizzes not found")
+    return quiz
+

@@ -15,7 +15,7 @@ load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-def transcribe_audio(db: Session, chat_room_id: int, model_name="base", non_english=True, energy_threshold=1000, record_timeout=2.0, phrase_timeout=3.0):
+def transcribe_audio(db: Session, chat_room_id: int, model_name="base", non_english=True, energy_threshold=500, record_timeout=2.0, phrase_timeout=1.0):
     model = model_name
     if model_name != "large" and not non_english:
         model = model + ".en"
