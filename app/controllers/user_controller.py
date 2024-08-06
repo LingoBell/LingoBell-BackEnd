@@ -31,15 +31,21 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
     print("첫 로그인인가?",result)
     return { "result": result }
 
-@router.get('/{uid}')
-def get_user_profile(request: Request, db: Session = Depends(get_db)):
+@router.get('/my-profile')
+def get_my_profile(request: Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     user_profile_data = get_user_profile_data(db, uid)
     return user_profile_data
 
-@router.put('/{uid}')
-async def update_user_profile(request: Request, uid: str, db: Session = Depends(get_db)):
+@router.get('/{uid}')
+def get_user_profile(request: Request, uid: str, db: Session = Depends(get_db)):
+    user_profile_data = get_user_profile_data(db, uid)
+    return user_profile_data
+
+@router.put('/my-profile')
+async def update_user_profile(request: Request, db: Session = Depends(get_db)):
     try:
+        uid = request.state.user['uid']
         form_data = await request.json()
         updated_user_profile = update_user_profile_data(db, uid, form_data)
         return {"updated_data": updated_user_profile}
