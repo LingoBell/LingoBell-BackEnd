@@ -29,7 +29,10 @@ def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
 @router.get('/')
 def get_live_chats(request: Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
-    return get_live_chat_list(db, uid)
+    live_chats = get_live_chat_list(db, uid)
+    if not live_chats:
+        raise HTTPException(status_code=404, detail="No live chats found")
+    return live_chats
 
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
