@@ -132,7 +132,6 @@ def get_request_user_list_data(db: Session, uid: str):
         .join(InterestAlias, UserInterest.interestId == InterestAlias.interestId, isouter=True)
         .where(ChatRoom.partnerId == user.userId)
     )
-
     results = db.execute(stmt).all()
 
     user_data = {}
@@ -163,5 +162,4 @@ def get_request_user_list_data(db: Session, uid: str):
             # Check for duplicates before adding interests
             if row.interestName and row.interestName not in user_data[chat_room_id]['interests']:
                 user_data[chat_room_id]['interests'].append(row.interestName)
-
     return list(user_data.values())
