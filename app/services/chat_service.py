@@ -52,7 +52,7 @@ def get_live_chat_list(db: Session, uid: str):
             # "username": result.User.username,
             # 필요한 필드들을 추가
         }
-    result_list.append(result_dict)
+        result_list.append(result_dict)
     return result_list
 
 def get_live_chat_data(db: Session, chat_room_id: int):
