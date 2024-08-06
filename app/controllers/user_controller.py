@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data
 
 router = APIRouter()
-
 
 @router.post("/") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
@@ -35,6 +34,14 @@ def check_first_time(request: Request, db: Session = Depends(get_db)):
 @router.get('/{uid}')
 def get_user_profile(request: Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
-    print("get_user_profile uid", uid)
     user_profile_data = get_user_profile_data(db, uid)
     return user_profile_data
+
+@router.put('/{uid}')
+async def update_user_profile(request: Request, uid: str, db: Session = Depends(get_db)):
+    try:
+        form_data = await request.json()
+        updated_user_profile = update_user_profile_data(db, uid, form_data)
+        return {"updated_data": updated_user_profile}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
