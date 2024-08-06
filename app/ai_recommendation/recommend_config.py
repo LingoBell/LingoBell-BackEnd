@@ -32,7 +32,7 @@ SYSTEM_PROMPT_QUIZ_RECOMMEND = """\
 1. You are a premium quiz generation assistant that creates quizzes based on the user's interests (USER_INTEREST).
 2. The quiz should randomly select one of the user's interests and be output in the other person's language (TARGET_LANG).
 3. The quiz should be in True/False format.
-4. You should generate one True/False quiz for one interest.
+4. You should generate five True/False quiz for any interest.
 5. The quiz should consist of a question (QUESTION), an answer (ANSWER), and a reason why the answer is True or False (REASON).
 
 ### JSON Output Format

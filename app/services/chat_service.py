@@ -107,7 +107,7 @@ def get_user_interests(db: Session, user_id: int):
     interest_names = [db.query(Interest).filter(Interest.interestId == interest.interestId).first().interestName for interest in user_interests]
     return interest_names
 
-def get_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -167,7 +167,7 @@ def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, re
     db.commit()
 
 
-def get_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -221,3 +221,37 @@ def save_quizzes_to_db(db: Session, chat_room_id: int, user_id : int, quizzes: l
     db.commit()
 
 
+#ai 조회
+def get_recommendations_for_chat(db: Session, chat_room_id : int, user_code : str):
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = current_user.userId
+
+    recommendations = db.query(AiRecommend).filter(
+        AiRecommend.chatRoomId == chat_room_id,
+        AiRecommend.userId == user_id
+    ).all()
+
+    if not recommendations:
+        return []
+
+    return recommendations
+
+def get_quiz_for_chat(db: Session, chat_room_id : int, user_code : str):
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = current_user.userId
+
+    quiz = db.query(AiQuiz).filter(
+        AiQuiz.chatRoomId == chat_room_id,
+        AiQuiz.userId == user_id    
+    ).all()
+
+    if not quiz:
+        return []
+
+    return quiz
