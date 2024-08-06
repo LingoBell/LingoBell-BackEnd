@@ -1,25 +1,30 @@
+import base64
+from email.mime import audio
+import io
+import logging
+import os
+import shutil
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, requests
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
+from pydub import AudioSegment
 from app.ai_recommendation.recommend_input import UserTopicInput, UserQuizInput
 from starlette.responses import RedirectResponse
-
-
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-security = HTTPBearer()
 
+security = HTTPBearer()
 
 router = APIRouter()
 
 @router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    print('상태', chat_room_id)
-    return update_live_chat_status(db, chat_room_id)
+def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
+    print('상태', chatRoomId)
+    return update_live_chat_status(db, chatRoomId)
 
 @router.get('/')
 def get_live_chats(request: Request, db: Session = Depends(get_db)):
@@ -38,9 +43,6 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-@router.put("/liveChat/{chat_room_id}")
-def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    return update_live_chat_status(db, chat_room_id)
 
 @router.post("/{chat_room_id}/stt")
 def create_stt(chat_room_id: int, db: Session = Depends(get_db)):
@@ -89,8 +91,6 @@ def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db
 def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
     pass
 
-
-
 # AI 주제추천
 @router.post("/{chat_room_id}/recommendations")
 def create_recommendations(request:Request ,chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -113,7 +113,6 @@ def get_recommendations(request : Request, chat_room_id : int, db : Session = De
         raise HTTPException(status_code=404, detail="Recommendations not found")
     return recommendations
 
-
 @router.get("/{chat_room_id}/quizzes")
 def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
@@ -121,3 +120,4 @@ def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_d
     if not quiz:
         raise HTTPException(status_code=404, detail="Quizzes not found")
     return quiz
+
