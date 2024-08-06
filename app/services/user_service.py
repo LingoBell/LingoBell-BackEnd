@@ -27,8 +27,8 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
             description=form_data['userIntroduce'],
             nativeLanguage = form_data['mainLanguage'],
             nation=form_data.get('nation', {}).get('value'),
-            nativeLanguageCode = form_data['nativeLanguageCode']
-            # profileImages = form_data_['profileImg']
+            nativeLanguageCode = form_data['nativeLanguageCode'],
+            profileImages = form_data['image']
         )
         db.add(user_profile)
         db.commit()
@@ -97,7 +97,8 @@ def get_user_profile_data(db: Session, uid: str):
         'nation': user.nation,
         'nativeLanguageCode': user.nativeLanguageCode,
         'interests': interests_list,
-        'learningLanguages': learning_langs_list
+        'learningLanguages': learning_langs_list,
+        'profileImages' : user.profileImages
     }
 
     print("user_profile_data", user_profile_data)
@@ -166,13 +167,4 @@ def upload_to_gcs(bucket_name: str, source_file: UploadFile, destination_blob_na
     blob.upload_from_file(source_file.file)
     return blob.public_url
 
-def save_image_url_to_user(db: Session, user_id: int, image_url: str):
-    #이미지url db저장
-    user = db.query(User).filter(User.userId == user_id).first()
-    if not user:
-        raise ValueError("User not found")
-    
-    user.profileImages = image_url
-    db.commit()
-    db.refresh(user)
-    return user
+
