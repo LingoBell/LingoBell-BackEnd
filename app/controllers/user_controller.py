@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data, upload_to_gcs, save_image_url_to_user
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data, upload_to_gcs
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database.models import User
 import os
@@ -60,19 +60,14 @@ async def update_user_profile(request: Request, db: Session = Depends(get_db)):
 @router.post("/image-upload")
 async def upload_image(request: Request, image: UploadFile = File(...), db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     uid = request.state.user['uid']
-    user = db.query(User).filter(User.userCode == uid).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
+
     if image.content_type not in ["image/jpeg", "image/png"]:
         raise HTTPException(status_code=400, detail="Invalid image format")
 
-    filename = f"user_{user.userId}_{image.filename}"
+    filename = f"user_{uid}_{image.filename}"
 
     try:
         gcs_url = upload_to_gcs(os.getenv("GCS_BUCKET_NAME"), image, filename)
-        user = save_image_url_to_user(db, user.userId, gcs_url)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
