@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
+from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
@@ -20,6 +20,11 @@ router = APIRouter()
 def update_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
     print('상태', chat_room_id)
     return update_live_chat_status(db, chat_room_id)
+
+@router.get('/')
+def get_live_chats(request: Request, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    return get_live_chat_list(db, uid)
 
 @router.get("/{chatRoomId}")
 def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
