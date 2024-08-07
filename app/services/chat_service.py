@@ -115,7 +115,7 @@ def get_user_interests(db: Session, user_id: int):
     interest_names = [db.query(Interest).filter(Interest.interestId == interest.interestId).first().interestName for interest in user_interests]
     return interest_names
 
-def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code: str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -133,7 +133,6 @@ def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_c
     user_interests = get_user_interests(db, user.userId)
     partner_interests = get_user_interests(db, partner.userId)
 
-    #호출하는 유저에 따라 출력되는 언어가 바뀌어야함
     if current_user.userId == user.userId:
         user_a = user
         user_b = partner
@@ -145,7 +144,6 @@ def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_c
         user_a_interests = partner_interests
         user_b_interests = user_interests
 
-    #user_content 및 partner_content로 수정해야함
     user_a_content = "Hi!"
     user_b_content = "Hello!"
 
@@ -174,7 +172,6 @@ def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, re
         db.add(ai_recommend)
     db.commit()
 
-
 def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
@@ -190,11 +187,10 @@ def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_co
     if not current_user:
         raise HTTPException(status_code=404, detail="Current user not found")
 
-
     user_interests = get_user_interests(db, user.userId)
     partner_interests = get_user_interests(db, partner.userId)
 
-        #호출하는 유저에 따라 출력되는 언어가 바뀌어야함
+    # 호출하는 유저에 따라 출력되는 언어가 바뀌어야 함
     if current_user.userId == user.userId:
         user_a = user
         user_b = partner
