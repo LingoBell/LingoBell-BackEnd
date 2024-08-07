@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data, upload_to_gcs
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.database.models import User
+import os
 
 router = APIRouter()
+security = HTTPBearer()
+
 
 @router.post("/") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
@@ -51,3 +56,19 @@ async def update_user_profile(request: Request, db: Session = Depends(get_db)):
         return {"updated_data": updated_user_profile}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/image-upload")
+async def upload_image(request: Request, image: UploadFile = File(...), db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+    uid = request.state.user['uid']
+
+    if image.content_type not in ["image/jpeg", "image/png"]:
+        raise HTTPException(status_code=400, detail="Invalid image format")
+
+    filename = f"user_{uid}_{image.filename}"
+
+    try:
+        gcs_url = upload_to_gcs(os.getenv("GCS_BUCKET_NAME"), image, filename)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+    return {"message": "Image uploaded successfully", "url": gcs_url}

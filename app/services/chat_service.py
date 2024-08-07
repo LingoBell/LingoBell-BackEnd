@@ -17,15 +17,22 @@ def generate_partner_id_user_id_or_query(partnerId, userId):
 
 def get_live_chat_list(db: Session, uid: str):
     user = db.query(User).filter(User.userCode == uid).first()
+
+    if not user:
+        return None
+
     userId = user.userId
     
+    joinStatus = 2
+
     # stmt1 = select(ChatRoom).join(User, ChatRoom.userId == User.userId).where(ChatRoom.partnerId == userId)
     # stmt2 = select(ChatRoom).join(User, ChatRoom.partnerId == User.userId).where(ChatRoom.userId == userId)
     # full_stmt = stmt1.union_all(stmt2)
-    query1 = db.query(ChatRoom, User).join(User, ChatRoom.userId == User.userId).filter(ChatRoom.partnerId == userId).filter(ChatRoom.joinStatus == 2)
+    
+    query1 = db.query(ChatRoom, User).join(User, ChatRoom.userId == User.userId).filter(ChatRoom.partnerId == userId).filter(ChatRoom.joinStatus == joinStatus)
 
     # 두 번째 쿼리
-    query2 = db.query(ChatRoom, User).join(User, ChatRoom.partnerId == User.userId).filter(ChatRoom.userId == userId).filter(ChatRoom.joinStatus == 2)
+    query2 = db.query(ChatRoom, User).join(User, ChatRoom.partnerId == User.userId).filter(ChatRoom.userId == userId).filter(ChatRoom.joinStatus == joinStatus)
 
     # 두 쿼리를 union_all로 합침
     results = query1.union_all(query2).all()
