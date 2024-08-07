@@ -125,3 +125,11 @@ def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Quizzes not found")
     return quiz
 
+# @router.get('/{chat_room_id}/status')
+# async def get_chat_room_status(chatRoomId: int):
+#     chatRoom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
+    
+#     if not chatRoom:
+#         raise HTTPException(status_code=404, detail="Chat room not found")
+    
+#     return {"joinStatus": chatRoom.joinStatus}
