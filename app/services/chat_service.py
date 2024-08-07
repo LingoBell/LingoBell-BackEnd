@@ -1,3 +1,4 @@
+import uuid
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, select
@@ -232,17 +233,32 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
     if chatRoom is not None:
         return { 'chatRoomId': chatRoom.chatRoomId }
 
+    ChatRoomId=create_chatroom_id(db)
+    print('만든 방',ChatRoomId)
     db_chat_room = ChatRoom(
+        chatRoomId=ChatRoomId,
         accessStatus=chat_room['accessStatus'],
         userId=userId,
         partnerId=chat_room['partnerId'],
     )
     db.add(db_chat_room)
+    db.flush()
     db.commit()
     db.refresh(db_chat_room)
-    # print("chatRoomId", db_chat_room.chatRoomId)
+    # db.add(db_chat_room)
+    # db.flush()
+
     return {"chatRoomId": db_chat_room.chatRoomId}
 
+def create_chatroom_id(db: Session):
+    while True:
+        chatRoomId = str(uuid.uuid4())[:10]
+        existing_chatroom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
+        print('랜덤 방번호 ', chatRoomId)
+        print('이미 있는 방 ', existing_chatroom)
+        if existing_chatroom is None:
+            return chatRoomId
+    
 def update_live_chat_status(db: Session, chatRoomId: int):
     # print('상태 변경할 채팅방 id : ', chatRoomId)
     chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
