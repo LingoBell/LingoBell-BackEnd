@@ -119,6 +119,7 @@ def update_user_profile_data(db: Session, uid: str, form_data: dict):
         user_profile.nativeLanguage = form_data['mainLanguage']
         user_profile.nation = form_data.get('nation', {}).get('value')
         user_profile.nativeLanguageCode = form_data['nativeLanguageCode']
+        user_profile.profileImages = form_data['image']
         
         db.commit()
         db.refresh(user_profile)
