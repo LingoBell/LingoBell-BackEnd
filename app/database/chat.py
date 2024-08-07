@@ -4,7 +4,7 @@ from app.database import Base
 class ChatRoom(Base):
     __tablename__ = 'chatRooms'
 
-    chatRoomId = Column(Integer, primary_key=True, index=True)
+    chatRoomId = Column(String(20), primary_key=True)
     accessStatus = Column(Integer, nullable=False, default=1) #접근여부 -> 1:기본값, 2: 접근불가
     userId = Column(Integer, nullable=False)
     partnerId = Column(Integer, nullable=False)

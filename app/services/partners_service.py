@@ -131,6 +131,7 @@ def get_request_user_list_data(db: Session, uid: str):
         .join(UserInterest, User.userId == UserInterest.userId, isouter=True)
         .join(InterestAlias, UserInterest.interestId == InterestAlias.interestId, isouter=True)
         .where(ChatRoom.partnerId == user.userId)
+        .where(ChatRoom.joinStatus == 1)
     )
     results = db.execute(stmt).all()
 
