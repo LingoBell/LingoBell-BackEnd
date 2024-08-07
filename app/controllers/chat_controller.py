@@ -35,8 +35,9 @@ def get_live_chats(request: Request, db: Session = Depends(get_db)):
     return live_chats
 
 @router.get("/{chatRoomId}")
-def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    chat_data = get_live_chat_data(db, chat_room_id)
+def get_live_chat(request : Request,chatRoomId: int, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    chat_data = get_live_chat_data(db, chatRoomId, uid)
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
