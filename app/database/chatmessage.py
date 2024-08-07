@@ -6,8 +6,8 @@ class ChatMessage(Base):
     __tablename__ = 'chatMessages'
 
     messageId = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    chatRoomId = Column(Integer, primary_key=True, nullable=False)
-    # chatRoomId = Column(Integer, ForeignKey('chatRooms.chatRoomId'), primary_key=True, nullable=False)
+    chatRoomId = Column(String(20), primary_key=True, nullable=False)
+    # chatRoomId = Column(String(20), ForeignKey('chatRooms.chatRoomId'), primary_key=True, nullable=False)
     originalMessage = Column(String(500), nullable=False)
     translatedMessage = Column(String(500), nullable=True)
     messageTime = Column(DateTime, nullable=False)

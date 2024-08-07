@@ -5,8 +5,8 @@ class AiRecommend(Base):
     __tablename__ = 'aiRecommend'
 
     aiRecommendId = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    chatRoomId = Column(Integer, nullable=False)
+    chatRoomId = Column(String(20), nullable=False)
     userId = Column(Integer, nullable=False) #개인화된 기록을 위함
-    # chatRoomId = Column(Integer, ForeignKey('chatRooms.chatRoomId'), nullable=False)
+    # chatRoomId = Column(String(20), ForeignKey('chatRooms.chatRoomId'), nullable=False)
     aiRecommendation = Column(String(500), nullable=False)
     aiRecommendDate = Column(Date, nullable=False)
