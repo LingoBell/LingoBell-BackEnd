@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 # Gemini generative AI
 api_key = os.getenv('GENAI_API_KEY')
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-flash',
+model = genai.GenerativeModel('gemini-1.5-pro-latest',
 generation_config=genai.GenerationConfig(
-temperature=0.8,
+temperature=0.9,
 top_p=0.9,
 response_mime_type="application/json"
 ))

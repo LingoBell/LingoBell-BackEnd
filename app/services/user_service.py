@@ -1,7 +1,12 @@
-from fastapi import HTTPException
+import os
+from google.cloud import storage
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from app.database.models import User, UserInterest, UserLearningLang, Language
 from app.database import SessionLocal
+from dotenv import load_dotenv
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
 #유저 존재 유무 판별
 def get_user_existance(db: Session, uid):
@@ -22,8 +27,8 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
             description=form_data['userIntroduce'],
             nativeLanguage = form_data['mainLanguage'],
             nation=form_data.get('nation', {}).get('value'),
-            nativeLanguageCode = form_data['nativeLanguageCode']
-            # profileImages = form_data_['profileImg']
+            nativeLanguageCode = form_data['nativeLanguageCode'],
+            profileImages = form_data['image']
         )
         db.add(user_profile)
         db.commit()
@@ -67,7 +72,9 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
     
 def get_user_profile_data(db: Session, uid: str):
     user = db.query(User).filter(User.userCode == uid).first()
-
+    if not user:
+        return None
+    print('dddd',user)
     user_interests = db.query(UserInterest).filter(UserInterest.userId == user.userId).all()
     
     user_learning_langs = db.query(UserLearningLang, Language).join(
@@ -90,7 +97,8 @@ def get_user_profile_data(db: Session, uid: str):
         'nation': user.nation,
         'nativeLanguageCode': user.nativeLanguageCode,
         'interests': interests_list,
-        'learningLanguages': learning_langs_list
+        'learningLanguages': learning_langs_list,
+        'profileImages' : user.profileImages
     }
 
     print("user_profile_data", user_profile_data)
@@ -150,3 +158,13 @@ def update_user_profile_data(db: Session, uid: str, form_data: dict):
         db.rollback()
         print('ERROR:', str(e))
         raise HTTPException(status_code=400, detail=str(e))
+
+def upload_to_gcs(bucket_name: str, source_file: UploadFile, destination_blob_name: str) -> str:
+    #이미지 GCS에 업로드
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_file(source_file.file)
+    return blob.public_url
+
+

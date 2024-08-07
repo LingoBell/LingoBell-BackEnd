@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_, select
 from datetime import datetime
 from app.database.models import ChatRoom, User, UserInterest, AiRecommend, AiQuiz, Interest
 from app.database import SessionLocal
@@ -7,19 +8,87 @@ from app.ai_recommendation.recommend_utils import get_topic_recommendations, get
 from app.ai_recommendation.recommend_input import UserQuizInput, UserTopicInput
 
 
+def generate_partner_id_user_id_or_query(partnerId, userId):
+    return or_(
+            and_(ChatRoom.userId == userId, ChatRoom.partnerId == partnerId),
+            and_(ChatRoom.userId == partnerId, ChatRoom.partnerId == userId)
+        )
+
+def get_live_chat_list(db: Session, uid: str):
+    user = db.query(User).filter(User.userCode == uid).first()
+
+    if not user:
+        return None
+
+    userId = user.userId
+    
+    joinStatus = 2
+
+    # stmt1 = select(ChatRoom).join(User, ChatRoom.userId == User.userId).where(ChatRoom.partnerId == userId)
+    # stmt2 = select(ChatRoom).join(User, ChatRoom.partnerId == User.userId).where(ChatRoom.userId == userId)
+    # full_stmt = stmt1.union_all(stmt2)
+    query1 = db.query(ChatRoom, User).join(User, ChatRoom.userId == User.userId).filter(ChatRoom.partnerId == userId).filter(ChatRoom.joinStatus == joinStatus)
+
+    # 두 번째 쿼리
+    query2 = db.query(ChatRoom, User).join(User, ChatRoom.partnerId == User.userId).filter(ChatRoom.userId == userId).filter(ChatRoom.joinStatus == joinStatus)
+
+    # 두 쿼리를 union_all로 합침
+    results = query1.union_all(query2).all()
+
+    # 쿼리 실행
+    # results = db.scalars(full_stmt).all()
+    print(results)
+    result_list = []
+    for result in results:
+        print(result.User, result.ChatRoom)
+        result_dict = {
+            "chatRoomId": result.ChatRoom.chatRoomId,
+            "userId": result.User.userId,
+            # "name": result.Use# The `name` variable is being used to store the value of
+            # `result.User.name` in the `get_live_chat_list` function. This value
+            # represents the name of the user associated with the chat room. It is
+            # then included in the `result_dict` dictionary along with other user
+            # information to be returned as part of the result list.
+            'userName': result.User.userName,
+            'birthday': result.User.birthday,
+            'nation': result.User.nation,
+            'gender': result.User.gender,
+            'profileImages': result.User.profileImages,
+            'nativeLanguage': result.User.nativeLanguage
+            # "username": result.User.username,
+            # 필요한 필드들을 추가
+        }
+        result_list.append(result_dict)
+    return result_list
+
 def get_live_chat_data(db: Session, chat_room_id: int):
+    
     return db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
 
 def create_chat_room(db: Session, chat_room: dict, uid: str):
     print("채팅방 생성 : ", chat_room)
-    print('userid', uid)
+    # print('userid', uid)
     user = db.query(User).filter(User.userCode == uid).first()
-    print('user 정보', user)
+    # print('user 정보', user)
 
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     
     userId = user.userId
+    partnerId = chat_room['partnerId']
+    # chatroom 이 존재하는 지여부를 찾아봄
+    # The line `return db.scalar(stmt)` is attempting to execute the SQL statement represented by
+    # `stmt` using the SQLAlchemy `scalar()` method.
+    # stmt = select(ChatRoom).where(ChatRoom.chatRoomId == chat_room_id)
+    # print(stmt)
+    # return db.scalar(stmt)
+    stmt = db.query(ChatRoom).filter(
+        generate_partner_id_user_id_or_query(partnerId, userId)
+    )
+    print(stmt)
+    chatRoom = stmt.first()
+    if chatRoom is not None:
+        return { 'chatRoomId': chatRoom.chatRoomId }
 
     db_chat_room = ChatRoom(
         accessStatus=chat_room['accessStatus'],
@@ -29,14 +98,16 @@ def create_chat_room(db: Session, chat_room: dict, uid: str):
     db.add(db_chat_room)
     db.commit()
     db.refresh(db_chat_room)
-    print("chatRoomId", db_chat_room.chatRoomId)
+    # print("chatRoomId", db_chat_room.chatRoomId)
     return {"chatRoomId": db_chat_room.chatRoomId}
 
-def update_live_chat_status(db: Session, chat_room_id: int):
-    print('상태 변경할 채팅방 id : ', chat_room_id)
-    chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).update({"joinStatus": 2})
+def update_live_chat_status(db: Session, chatRoomId: int):
+    # print('상태 변경할 채팅방 id : ', chatRoomId)
+    chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
+    chat_room.joinStatus = 2
     db.commit()
-    print("update된 chat_room", chat_room)
+    # print("update된 chat_room", chat_room)
+    return {"message" : "chatroom joinstatus updated"}
 
 #ai 추천 service layer
 def get_user_interests(db: Session, user_id: int):
@@ -44,7 +115,7 @@ def get_user_interests(db: Session, user_id: int):
     interest_names = [db.query(Interest).filter(Interest.interestId == interest.interestId).first().interestName for interest in user_interests]
     return interest_names
 
-def get_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -104,7 +175,7 @@ def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, re
     db.commit()
 
 
-def get_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -158,3 +229,37 @@ def save_quizzes_to_db(db: Session, chat_room_id: int, user_id : int, quizzes: l
     db.commit()
 
 
+#ai 조회
+def get_recommendations_for_chat(db: Session, chat_room_id : int, user_code : str):
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = current_user.userId
+
+    recommendations = db.query(AiRecommend).filter(
+        AiRecommend.chatRoomId == chat_room_id,
+        AiRecommend.userId == user_id
+    ).all()
+
+    if not recommendations:
+        return []
+
+    return recommendations
+
+def get_quiz_for_chat(db: Session, chat_room_id : int, user_code : str):
+    current_user = db.query(User).filter(User.userCode == user_code).first()
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = current_user.userId
+
+    quiz = db.query(AiQuiz).filter(
+        AiQuiz.chatRoomId == chat_room_id,
+        AiQuiz.userId == user_id    
+    ).all()
+
+    if not quiz:
+        return []
+
+    return quiz
