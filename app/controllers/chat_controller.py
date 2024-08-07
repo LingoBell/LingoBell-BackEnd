@@ -7,7 +7,7 @@ import shutil
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, requests
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
+from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
@@ -36,8 +36,8 @@ def get_live_chats(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{chatRoomId}")
 def get_live_chat(request : Request,chatRoomId: int, db: Session = Depends(get_db)):
-    uid = request.state.user['uid']
-    chat_data = get_live_chat_data(db, chatRoomId, uid)
+    userCode = request.state.user['uid']
+    chat_data = get_live_chat_history_data(db, chatRoomId, userCode)
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data

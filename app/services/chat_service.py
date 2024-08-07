@@ -140,10 +140,13 @@ def get_live_chat_list(db: Session, uid: str):
 
     return list(chat_rooms.values())
 
+def get_live_chat_data(db: Session, chatRoomId: int):
+    return db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
 
-def get_live_chat_data(db: Session, chatRoomId: int, uid : str):
+
+def get_live_chat_history_data(db: Session, chatRoomId: int, userCode : str):
     # 현재 사용자의 정보를 가져옵니다.
-    current_user = db.query(User).filter(User.userCode == uid).first()
+    current_user = db.query(User).filter(User.userCode == userCode).first()
     
     if not current_user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -274,7 +277,7 @@ def get_user_interests(db: Session, user_id: int):
     return interest_names
 
 def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code: str):
-    chat_room = get_live_chat_data(db, chat_room_id, user_code)
+    chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
 
