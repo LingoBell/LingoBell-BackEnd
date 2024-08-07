@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Text
 from app.database import Base
 
 class AiQuiz(Base):
@@ -10,5 +10,5 @@ class AiQuiz(Base):
     # chatRoomId = Column(String(20), ForeignKey('chatRooms.chatRoomId'), nullable=False)
     aiQuestion = Column(String(255), nullable=False)
     aiAnswer = Column(String(2), nullable=False)
-    aiReason = Column(String(255), nullable=False)
+    aiReason = Column(Text, nullable=False)
     aiQuizDate = Column(Date, nullable=False)
