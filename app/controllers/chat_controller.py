@@ -22,7 +22,7 @@ security = HTTPBearer()
 router = APIRouter()
 
 @router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
+def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
     return update_live_chat_status(db, chatRoomId)
 
@@ -35,7 +35,7 @@ def get_live_chats(request: Request, db: Session = Depends(get_db)):
     return live_chats
 
 @router.get("/{chatRoomId}")
-def get_live_chat(request : Request,chatRoomId: int, db: Session = Depends(get_db)):
+def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_db)):
     userCode = request.state.user['uid']
     chat_data = get_live_chat_history_data(db, chatRoomId, userCode)
     if chat_data is None:

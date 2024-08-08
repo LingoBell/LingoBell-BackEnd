@@ -196,6 +196,7 @@ def get_live_chat_history_data(db: Session, chatRoomId: int, userCode : str):
                 "gender": user.gender,
                 "profileImages": user.profileImages,
                 "nativeLanguage": user.nativeLanguage,
+                "description" : user.description,
                 "learningLanguages": [],
                 "interests": []
             }
