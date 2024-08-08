@@ -140,11 +140,11 @@ def get_live_chat_list(db: Session, uid: str):
 
     return list(chat_rooms.values())
 
-def get_live_chat_data(db: Session, chatRoomId: int):
+def get_live_chat_data(db: Session, chatRoomId: str):
     return db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
 
 
-def get_live_chat_history_data(db: Session, chatRoomId: int, userCode : str):
+def get_live_chat_history_data(db: Session, chatRoomId: str, userCode : str):
     # 현재 사용자의 정보를 가져옵니다.
     current_user = db.query(User).filter(User.userCode == userCode).first()
     
@@ -263,7 +263,7 @@ def create_chatroom_id(db: Session):
         if existing_chatroom is None:
             return chatRoomId
     
-def update_live_chat_status(db: Session, chatRoomId: int):
+def update_live_chat_status(db: Session, chatRoomId: str):
     # print('상태 변경할 채팅방 id : ', chatRoomId)
     chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chatRoomId).first()
     chat_room.joinStatus = 2
@@ -388,7 +388,7 @@ def save_quizzes_to_db(db: Session, chat_room_id: str, user_id : int, quizzes: l
 
 
 #ai 조회
-def get_recommendations_for_chat(db: Session, chat_room_id : int, user_code : str):
+def get_recommendations_for_chat(db: Session, chat_room_id : str, user_code : str):
     current_user = db.query(User).filter(User.userCode == user_code).first()
     if not current_user:
         raise HTTPException(status_code=404, detail="User not found")

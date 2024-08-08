@@ -49,18 +49,18 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
 
 
 @router.post("/{chat_room_id}/stt")
-def create_stt(chat_room_id: int, db: Session = Depends(get_db)):
+def create_stt(chat_room_id: str, db: Session = Depends(get_db)):
     transcription_result = transcribe_audio(db, chat_room_id)
     return {"transcription": transcription_result}
 
 @router.post("/{chat_room_id}/translations")
-def create_translation(chat_room_id: int, original_text: str, db: Session = Depends(get_db)):
+def create_translation(chat_room_id: str, original_text: str, db: Session = Depends(get_db)):
     translated_text = translate_text(original_text, target='en')
     save_to_db(db, chat_room_id, original_text, translated_text)
     return {"original_text": original_text, "translated_text": translated_text}
 
 @router.get("/{chat_room_id}/stt")
-def get_stt(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)
@@ -76,7 +76,7 @@ def get_stt(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session
     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/translations")
-def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+def get_translations(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)
@@ -92,7 +92,7 @@ def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db
     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/tts")
-def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
+def get_tts(chat_room_id: str, timestamp: datetime, db: Session = Depends(get_db)):
     pass
 
 # AI 주제추천
