@@ -22,7 +22,7 @@ security = HTTPBearer()
 router = APIRouter()
 
 @router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
+def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
     return update_live_chat_status(db, chatRoomId)
 
