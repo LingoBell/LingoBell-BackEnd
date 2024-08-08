@@ -276,7 +276,7 @@ def get_user_interests(db: Session, user_id: int):
     interest_names = [db.query(Interest).filter(Interest.interestId == interest.interestId).first().interestName for interest in user_interests]
     return interest_names
 
-def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_code: str):
+def create_topic_recommendations_for_chat(db: Session, chat_room_id: str, user_code: str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -322,7 +322,7 @@ def create_topic_recommendations_for_chat(db: Session, chat_room_id: int, user_c
     save_recommendations_to_db(db, chat_room_id, current_user.userId, recommendations["user_a_recommend"])
     return recommendations
 
-def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, recommendations: list):
+def save_recommendations_to_db(db: Session, chat_room_id: str, user_id : int, recommendations: list):
     for recommendation in recommendations:
         ai_recommend = AiRecommend(
             chatRoomId=chat_room_id,
@@ -333,7 +333,7 @@ def save_recommendations_to_db(db: Session, chat_room_id: int, user_id : int, re
         db.add(ai_recommend)
     db.commit()
 
-def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_code : str):
+def create_quiz_recommendations_for_chat(db: Session, chat_room_id: str, user_code : str):
     chat_room = get_live_chat_data(db, chat_room_id)
     if not chat_room:
         raise HTTPException(status_code=404, detail="Chat room not found")
@@ -372,7 +372,7 @@ def create_quiz_recommendations_for_chat(db: Session, chat_room_id: int, user_co
     save_quizzes_to_db(db, chat_room_id, current_user.userId, quiz["user_a_quiz"])
     return quiz
 
-def save_quizzes_to_db(db: Session, chat_room_id: int, user_id : int, quizzes: list):
+def save_quizzes_to_db(db: Session, chat_room_id: str, user_id : int, quizzes: list):
     for quiz in quizzes:
         ai_quiz = AiQuiz(
             chatRoomId=chat_room_id,
@@ -404,7 +404,7 @@ def get_recommendations_for_chat(db: Session, chat_room_id : int, user_code : st
 
     return recommendations
 
-def get_quiz_for_chat(db: Session, chat_room_id : int, user_code : str):
+def get_quiz_for_chat(db: Session, chat_room_id : str, user_code : str):
     current_user = db.query(User).filter(User.userCode == user_code).first()
     if not current_user:
         raise HTTPException(status_code=404, detail="User not found")
