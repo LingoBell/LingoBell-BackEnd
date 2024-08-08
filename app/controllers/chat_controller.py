@@ -97,20 +97,20 @@ def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db
 
 # AI 주제추천
 @router.post("/{chat_room_id}/recommendations")
-def create_recommendations(request:Request ,chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def create_recommendations(request:Request ,chat_room_id: str, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     recommendations = create_topic_recommendations_for_chat(db, chat_room_id, user_code)
     return recommendations
 
 # AI 퀴즈생성
 @router.post("/{chat_room_id}/quizzes")
-def create_quiz(request:Request, chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def create_quiz(request:Request, chat_room_id: str, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     quiz = create_quiz_recommendations_for_chat(db, chat_room_id, user_code)
     return quiz
 
 @router.get("/{chat_room_id}/recommendations")
-def get_recommendations(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_recommendations(request : Request, chat_room_id : str, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     recommendations = get_recommendations_for_chat(db, chat_room_id, user_code)
     if not recommendations:
@@ -118,10 +118,18 @@ def get_recommendations(request : Request, chat_room_id : int, db : Session = De
     return recommendations
 
 @router.get("/{chat_room_id}/quizzes")
-def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_quiz(request : Request, chat_room_id : str, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     quiz = get_quiz_for_chat(db, chat_room_id, user_code)
     if not quiz:
         raise HTTPException(status_code=404, detail="Quizzes not found")
     return quiz
 
+# @router.get('/{chat_room_id}/status')
+# async def get_chat_room_status(chatRoomId: int):
+#     chatRoom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
+    
+#     if not chatRoom:
+#         raise HTTPException(status_code=404, detail="Chat room not found")
+    
+#     return {"joinStatus": chatRoom.joinStatus}
