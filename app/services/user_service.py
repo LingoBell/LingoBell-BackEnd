@@ -2,7 +2,7 @@ import os
 from google.cloud import storage
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from app.database.models import User, UserInterest, UserLearningLang, Language
+from app.database.models import User, UserInterest, UserLearningLang, Language, FcmToken
 from app.database import SessionLocal
 from dotenv import load_dotenv
 
@@ -169,3 +169,29 @@ def upload_to_gcs(bucket_name: str, source_file: UploadFile, destination_blob_na
     return blob.public_url
 
 
+#FCM
+def save_fcm_token(uid : str ,token : str, db: Session):
+    user = db.query(User).filter(User.userCode == uid).first()
+
+    existing_token = db.query(FcmToken).filter(FcmToken.token == token).first()
+    if existing_token:
+        print("Token already exists")
+        raise HTTPException(status_code=400, detail="Token already exists")
+
+    try : 
+        fcm_token = FcmToken(
+            userId = user.userId,
+            token = token
+        )
+
+        db.add(fcm_token)
+        db.commit()
+        db.refresh(fcm_token)
+
+        return fcm_token
+    except Exception as e:
+        db.rollback()
+        print('ERROR')
+        raise HTTPException(status_code=400, detail=str(e))
+
+    

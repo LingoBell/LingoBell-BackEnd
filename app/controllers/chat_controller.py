@@ -7,7 +7,7 @@ import shutil
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, requests
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data
+from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
@@ -124,6 +124,20 @@ def get_quiz(request : Request, chat_room_id : str, db : Session = Depends(get_d
     if not quiz:
         raise HTTPException(status_code=404, detail="Quizzes not found")
     return quiz
+
+@router.get("/{chat_room_id}/info")
+def get_chat_room_info_for_notification(request : Request, chat_room_id : str, db : Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    if not uid:
+        raise HTTPException(status_code=400, detail="UID is missing")
+    try:
+        chatInfo = request_chat_room_notification(chat_room_id, db, uid )
+    
+    except Exception as e:
+        print('error', e)
+        raise HTTPException(status_code=400, detail="Invalid chatRoom data")
+
+
 
 # @router.get('/{chat_room_id}/status')
 # async def get_chat_room_status(chatRoomId: int):

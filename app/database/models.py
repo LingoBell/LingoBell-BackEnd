@@ -12,3 +12,4 @@ from app.database.airecommend import AiRecommend
 from app.database.userlearninglangs import UserLearningLang
 from app.database.userinterests import UserInterest
 from app.database.aiquiz import AiQuiz
+from app.database.fcmtoken import FcmToken
