@@ -54,14 +54,12 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     return create_chat_room(db, chat_room, uid)
 
 @router.post("/{chat_room_id}/stt")
-async def create_stt(chat_room_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_stt(chat_room_id: str, text: str, uid: str, message_time: datetime, db: Session = Depends(get_db)):
     try:
         print(f"Received request for chat_room_id: {chat_room_id}")
-        print(f"Received file: {file.filename}, Content type: {file.content_type}")
+        text_payload = {'stt texts': text}
 
-        files = {'file': (file.filename, file.file, file.content_type)}
-
-        response = requests.post(f"{GPU_SERVER_URL}/{chat_room_id}/stt", files=files)
+        response = requests.post(f"{GPU_SERVER_URL}/{chat_room_id}/stt", json=text_payload)
         print(f"Response from GPU server: {response.status_code}")
         
         if response.status_code != 200:
@@ -70,7 +68,7 @@ async def create_stt(chat_room_id: str, file: UploadFile = File(...), db: Sessio
         transcription_result = response.json()
         print(f"Transcription result from GPU server: {transcription_result}")
 
-        save_to_db(db, chat_room_id, transcription_result['text'], transcription_result['text'])
+        save_to_db(db, chat_room_id, transcription_result, message_time, uid)
 
         return transcription_result
     except Exception as e:
@@ -90,7 +88,7 @@ async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: S
     messages = query.all()
     response_data = [
         {
-            "type": "me" if message.messageSenderId == 1 else "partner",
+            "type": "",
             "messageSenderId": message.messageSenderId,
             "originalMessage": message.originalMessage,
             "translatedMessage": message.translatedMessage
