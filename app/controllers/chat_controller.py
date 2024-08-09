@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 import base64
 from email.mime import audio
 import io
@@ -5,14 +10,13 @@ import logging
 import os
 import shutil
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request, requests
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, requests
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data
 from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
-# from pydub import AudioSegment
 from app.ai_recommendation.recommend_input import UserTopicInput, UserQuizInput
 from starlette.responses import RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -20,6 +24,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 
 router = APIRouter()
+
+GPU_SERVER_URL = os.getenv('GPU_SERVER_URL')
 
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
@@ -47,11 +53,28 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-
 @router.post("/{chat_room_id}/stt")
-def create_stt(chat_room_id: str, db: Session = Depends(get_db)):
-    transcription_result = transcribe_audio(db, chat_room_id)
-    return {"transcription": transcription_result}
+async def create_stt(chat_room_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        print(f"Received request for chat_room_id: {chat_room_id}")
+        print(f"Received file: {file.filename}, Content type: {file.content_type}")
+
+        files = {'file': (file.filename, file.file, file.content_type)}
+
+        response = requests.post(f"{GPU_SERVER_URL}/{chat_room_id}/stt", files=files)
+        print(f"Response from GPU server: {response.status_code}")
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+        transcription_result = response.json()
+        print(f"Transcription result from GPU server: {transcription_result}")
+
+        save_to_db(db, chat_room_id, transcription_result['text'], transcription_result['text'])
+
+        return transcription_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{chat_room_id}/translations")
 def create_translation(chat_room_id: str, original_text: str, db: Session = Depends(get_db)):
@@ -60,7 +83,7 @@ def create_translation(chat_room_id: str, original_text: str, db: Session = Depe
     return {"original_text": original_text, "translated_text": translated_text}
 
 @router.get("/{chat_room_id}/stt")
-def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)

@@ -16,9 +16,6 @@ from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from app.database.models import ChatMessage
-from datetime import datetime
-
 app = FastAPI()
 transcription_result = ""
 security = HTTPBearer()
@@ -111,96 +108,6 @@ app.add_middleware(
 @app.on_event("startup")
 def on_startup():
     init_db()
-    add_dummy_data()
-    
-def add_dummy_data():
-    db = SessionLocal()
-    dummy_data = [
-    {
-        'chatRoomId': 4,
-        'originalMessage': 'こんにちは！はじめまして。',
-        'translatedMessage': '¡Hola! Encantado de conocerte.',
-        'messageTime': datetime(2024, 8, 3, 10, 0, 0),
-        'messageSenderId': 5
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '¡Hola! Encantado de conocerte también.',
-        'translatedMessage': 'こんにちは！私もはじめまして。',
-        'messageTime': datetime(2024, 8, 3, 10, 0, 10),
-        'messageSenderId': 6
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '趣味は何ですか？',
-        'translatedMessage': '¿Cuáles son tus aficiones?',
-        'messageTime': datetime(2024, 8, 3, 10, 1, 0),
-        'messageSenderId': 5
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': 'Me gusta bailar. ¿Y a ti?',
-        'translatedMessage': '私はダンスが好きです。あなたは？',
-        'messageTime': datetime(2024, 8, 3, 10, 1, 30),
-        'messageSenderId': 6
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '私は料理が好きです。新しいレシピを試すのが楽しいです。',
-        'translatedMessage': 'Me gusta cocinar. Es divertido probar nuevas recetas.',
-        'messageTime': datetime(2024, 8, 3, 10, 2, 0),
-        'messageSenderId': 5
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '¡Eso es genial! ¿Tienes alguna receta favorita?',
-        'translatedMessage': 'それは素晴らしいですね！お気に入りのレシピはありますか？',
-        'messageTime': datetime(2024, 8, 3, 10, 2, 30),
-        'messageSenderId': 6
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': 'はい、最近はパエリアを作るのが好きです。',
-        'translatedMessage': 'Sí, recientemente me gusta hacer paella.',
-        'messageTime': datetime(2024, 8, 3, 10, 3, 0),
-        'messageSenderId': 5
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '¡Me encanta la paella! La próxima vez cocinemos juntos.',
-        'translatedMessage': 'パエリアが大好きです！次回は一緒に料理しましょう。',
-        'messageTime': datetime(2024, 8, 3, 10, 3, 30),
-        'messageSenderId': 6
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': 'もちろん！楽しみにしています。',
-        'translatedMessage': '¡Por supuesto! Lo estoy deseando.',
-        'messageTime': datetime(2024, 8, 3, 10, 4, 0),
-        'messageSenderId': 5
-    },
-    {
-        'chatRoomId': 4,
-        'originalMessage': '¿Cuándo te viene bien?',
-        'translatedMessage': 'いつが都合いいですか？',
-        'messageTime': datetime(2024, 8, 3, 10, 4, 30),
-        'messageSenderId': 6
-    }
-]
-
-
-    for data in dummy_data:
-        message = ChatMessage(
-            chatRoomId=data['chatRoomId'],
-            originalMessage=data['originalMessage'],
-            translatedMessage=data['translatedMessage'],
-            messageTime=data['messageTime'],
-            messageSenderId=data['messageSenderId']
-        )
-        db.add(message)
-    
-    db.commit()
-    db.close()
 
 # # 구글 로그인 요청 endpoint
 @app.post("/api/verify-token")
