@@ -12,8 +12,8 @@ import shutil
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, requests
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
-from app.services.transcribe_service import translate_text, save_to_db
+from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data
+from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
@@ -28,7 +28,7 @@ router = APIRouter()
 GPU_SERVER_URL = os.getenv('GPU_SERVER_URL')
 
 @router.put("/{chatRoomId}/vacancy")
-def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
+def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
     return update_live_chat_status(db, chatRoomId)
 
@@ -41,8 +41,9 @@ def get_live_chats(request: Request, db: Session = Depends(get_db)):
     return live_chats
 
 @router.get("/{chatRoomId}")
-def get_live_chat(chat_room_id: int, db: Session = Depends(get_db)):
-    chat_data = get_live_chat_data(db, chat_room_id)
+def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_db)):
+    userCode = request.state.user['uid']
+    chat_data = get_live_chat_history_data(db, chatRoomId, userCode)
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
@@ -53,7 +54,7 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     return create_chat_room(db, chat_room, uid)
 
 @router.post("/{chat_room_id}/stt")
-async def create_stt(chat_room_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_stt(chat_room_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
         print(f"Received request for chat_room_id: {chat_room_id}")
         print(f"Received file: {file.filename}, Content type: {file.content_type}")
@@ -76,13 +77,13 @@ async def create_stt(chat_room_id: int, file: UploadFile = File(...), db: Sessio
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{chat_room_id}/translations")
-def create_translation(chat_room_id: int, original_text: str, db: Session = Depends(get_db)):
+def create_translation(chat_room_id: str, original_text: str, db: Session = Depends(get_db)):
     translated_text = translate_text(original_text, target='en')
     save_to_db(db, chat_room_id, original_text, translated_text)
     return {"original_text": original_text, "translated_text": translated_text}
 
 @router.get("/{chat_room_id}/stt")
-async def get_stt(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)
@@ -98,7 +99,7 @@ async def get_stt(chat_room_id: int, timestamp: Optional[datetime] = None, db: S
     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/translations")
-def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+def get_translations(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)
@@ -114,25 +115,25 @@ def get_translations(chat_room_id: int, timestamp: Optional[datetime] = None, db
     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/tts")
-def get_tts(chat_room_id: int, timestamp: datetime, db: Session = Depends(get_db)):
+def get_tts(chat_room_id: str, timestamp: datetime, db: Session = Depends(get_db)):
     pass
 
 # AI 주제추천
 @router.post("/{chat_room_id}/recommendations")
-def create_recommendations(request:Request ,chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def create_recommendations(request:Request ,chat_room_id: str, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     recommendations = create_topic_recommendations_for_chat(db, chat_room_id, user_code)
     return recommendations
 
 # AI 퀴즈생성
 @router.post("/{chat_room_id}/quizzes")
-def create_quiz(request:Request, chat_room_id: int, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def create_quiz(request:Request, chat_room_id: str, db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     quiz = create_quiz_recommendations_for_chat(db, chat_room_id, user_code)
     return quiz
 
 @router.get("/{chat_room_id}/recommendations")
-def get_recommendations(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_recommendations(request : Request, chat_room_id : str, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     recommendations = get_recommendations_for_chat(db, chat_room_id, user_code)
     if not recommendations:
@@ -140,10 +141,18 @@ def get_recommendations(request : Request, chat_room_id : int, db : Session = De
     return recommendations
 
 @router.get("/{chat_room_id}/quizzes")
-def get_quiz(request : Request, chat_room_id : int, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+def get_quiz(request : Request, chat_room_id : str, db : Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
     user_code = request.state.user['uid']
     quiz = get_quiz_for_chat(db, chat_room_id, user_code)
     if not quiz:
         raise HTTPException(status_code=404, detail="Quizzes not found")
     return quiz
 
+# @router.get('/{chat_room_id}/status')
+# async def get_chat_room_status(chatRoomId: int):
+#     chatRoom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
+    
+#     if not chatRoom:
+#         raise HTTPException(status_code=404, detail="Chat room not found")
+    
+#     return {"joinStatus": chatRoom.joinStatus}
