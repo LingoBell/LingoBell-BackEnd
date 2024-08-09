@@ -3,10 +3,12 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, select
 from datetime import datetime
-from app.database.models import ChatRoom, User, UserInterest, AiRecommend, AiQuiz, Interest, UserLearningLang, Language
+from app.database.models import ChatRoom, User, UserInterest, AiRecommend, AiQuiz, Interest, UserLearningLang, Language, FcmToken
 from app.database import SessionLocal
 from app.ai_recommendation.recommend_utils import get_topic_recommendations, get_quiz_recommendations
 from app.ai_recommendation.recommend_input import UserQuizInput, UserTopicInput
+from app.utils.firebase_utils import send_notification_to_user
+
 
 
 def generate_partner_id_user_id_or_query(partnerId, userId):
@@ -421,3 +423,28 @@ def get_quiz_for_chat(db: Session, chat_room_id : str, user_code : str):
         return []
 
     return quiz
+
+
+#FCM Notification
+def request_chat_room_notification(chat_room_id : str, db:Session, uid : str ):
+    user = db.query(User).filter(User.userCode == uid).first()
+    userId = user.userId
+
+    chatRoom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
+
+    if userId == chatRoom.userId:
+        recipientId = chatRoom.partnerId
+    
+    elif userId == chatRoom.partnerId:
+        recipientId = chatRoom.userId
+
+    partner = db.query(User).filter(User.userId == recipientId).first()
+
+    send_notification_to_user(
+        recipientId,
+        title=f'🎉{partner.userName}, {user.userName} just invites you!',
+        body=f'🌍Learn {user.nativeLanguage} with {user.userName}!',
+        image = 'https://storage.googleapis.com/lingobellstorage/lingobellLogo.png',
+        link=f"http://localhost:9000/live-chat/{chat_room_id}",
+        chat_room_id=chat_room_id,
+        db=db)

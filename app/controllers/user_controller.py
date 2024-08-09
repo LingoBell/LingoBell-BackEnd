@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, File, UploadFile
 from sqlalchemy.orm import Session
 from app.database import SessionLocal, get_db
-from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data, upload_to_gcs
+from app.services.user_service import add_user_profile_data, get_user_existance, get_user_profile_data, update_user_profile_data, upload_to_gcs, save_fcm_token
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.database.models import User
 import os
@@ -72,3 +72,22 @@ async def upload_image(request: Request, image: UploadFile = File(...), db: Sess
         raise HTTPException(status_code=404, detail=str(e))
 
     return {"message": "Image uploaded successfully", "url": gcs_url}
+
+
+@router.post("/fcm")
+async def register_fcm_token(request : Request, db : Session = Depends(get_db)):
+    data = await request.json()
+    token = data.get('token')
+    uid = request.state.user['uid']
+    print(uid)
+    if not uid:
+        raise HTTPException(status_code=400, detail="UID is missing")
+
+    try:
+        token = save_fcm_token(uid, token, db)
+    except Exception as e:
+        print('ERROR', e)
+        raise HTTPException(status_code=400, detail="Invalid JSON data")
+
+    return {"FCM_Token" : token}
+
