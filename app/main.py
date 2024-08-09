@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db, SessionLocal
-from app.controllers import chat_controller, face_controller, user_controller, partners_controller
+from app.controllers import chat_controller, user_controller, partners_controller
 
 import uvicorn
 from fastapi.middleware import Middleware
