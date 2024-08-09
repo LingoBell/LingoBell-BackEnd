@@ -13,13 +13,10 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, requests
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat
-from app.services.transcribe_service import transcribe_audio, translate_text, save_to_db
-from app.services.chat_service import get_live_chat_data, create_chat_room, update_live_chat_status, get_topic_recommendations_for_chat, get_quiz_recommendations_for_chat
 from app.services.transcribe_service import translate_text, save_to_db
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
-from pydub import AudioSegment
 from app.ai_recommendation.recommend_input import UserTopicInput, UserQuizInput
 from starlette.responses import RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -28,7 +25,7 @@ security = HTTPBearer()
 
 router = APIRouter()
 
-NGROK_URL = os.getenv('NGROK_URL')
+GPU_SERVER_URL = os.getenv('GPU_SERVER_URL')
 
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: int, db: Session = Depends(get_db)):
@@ -55,24 +52,25 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-
 @router.post("/{chat_room_id}/stt")
 async def create_stt(chat_room_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     try:
+        print(f"Received request for chat_room_id: {chat_room_id}")
         print(f"Received file: {file.filename}, Content type: {file.content_type}")
-        content = await file.read()
-        print(f"File content size: {len(content)} bytes")
-        
+
         files = {'file': (file.filename, file.file, file.content_type)}
-        # 이 부분을 그냥 파이썬 실행하는게 아니라 프론트에서 GPU서버로 보내고, 텍스트 변환된 것을 
-        response = requests.post(f"{NGROK_URL}", files=files)
+
+        response = requests.post(f"{GPU_SERVER_URL}/{chat_room_id}/stt", files=files)
+        print(f"Response from GPU server: {response.status_code}")
         
         if response.status_code != 200:
             raise HTTPException(status_code=response.status_code, detail=response.text)
-        
+
         transcription_result = response.json()
-        save_to_db(db, chat_room_id, transcription_result['text'], transcription_result['translated_text'])
-        
+        print(f"Transcription result from GPU server: {transcription_result}")
+
+        save_to_db(db, chat_room_id, transcription_result['text'], transcription_result['text'])
+
         return transcription_result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
