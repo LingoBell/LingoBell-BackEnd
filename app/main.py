@@ -240,7 +240,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
 app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
-app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
+# app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
 
 
 if __name__ == "__main__":
