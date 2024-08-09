@@ -12,7 +12,7 @@ from app.services.transcribe_service import transcribe_audio, translate_text, sa
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
-from pydub import AudioSegment
+# from pydub import AudioSegment
 from app.ai_recommendation.recommend_input import UserTopicInput, UserQuizInput
 from starlette.responses import RedirectResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
