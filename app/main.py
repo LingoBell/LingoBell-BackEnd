@@ -9,7 +9,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
 from app.database import init_db, SessionLocal
-from app.controllers import chat_controller, face_controller, user_controller, partners_controller
+from app.controllers import chat_controller, user_controller, partners_controller
 
 import uvicorn
 from fastapi.middleware import Middleware
@@ -147,7 +147,7 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
 app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
-app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
+# app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
 
 
 if __name__ == "__main__":
