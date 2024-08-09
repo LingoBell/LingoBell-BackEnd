@@ -137,13 +137,3 @@ def get_chat_room_info_for_notification(request : Request, chat_room_id : str, d
         print('error', e)
         raise HTTPException(status_code=400, detail="Invalid chatRoom data")
 
-
-
-# @router.get('/{chat_room_id}/status')
-# async def get_chat_room_status(chatRoomId: int):
-#     chatRoom = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
-    
-#     if not chatRoom:
-#         raise HTTPException(status_code=404, detail="Chat room not found")
-    
-#     return {"joinStatus": chatRoom.joinStatus}

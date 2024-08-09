@@ -446,4 +446,5 @@ def request_chat_room_notification(chat_room_id : str, db:Session, uid : str ):
         body=f'🌍Learn {user.nativeLanguage} with {user.userName}!',
         image = 'https://storage.googleapis.com/lingobellstorage/lingobellLogo.png',
         link=f"http://localhost:9000/live-chat/{chat_room_id}",
+        chat_room_id=chat_room_id,
         db=db)

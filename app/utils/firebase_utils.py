@@ -3,7 +3,7 @@ from app.database.models import FcmToken
 from firebase_admin import messaging
 
 
-def send_notification_to_user(user_id: int, title: str, body: str, image: str, link : str, db: Session):
+def send_notification_to_user(user_id: int, title: str, body: str, image: str, link : str, db: Session, chat_room_id : str):
     # user_id에 해당하는 모든 FCM 토큰을 가져옴
     tokens = db.query(FcmToken).filter(FcmToken.userId == user_id).all()
 
@@ -18,7 +18,10 @@ def send_notification_to_user(user_id: int, title: str, body: str, image: str, l
                 body=body,
                 image=image
             ),
-            data={"link": link}, 
+            data={
+                "link": link,
+                "chat_room_id": chat_room_id
+            }, 
             token=token.token,
         )
         
