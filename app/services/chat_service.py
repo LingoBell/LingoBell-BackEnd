@@ -121,6 +121,7 @@ def get_live_chat_list(db: Session, uid: str):
             chat_rooms[chat_room_id] = {
                 "chatRoomId": chat_room_id,
                 "userId": user.userId,
+                'userCode' : user.userCode,
                 "userName": user.userName,
                 "birthday": user.birthday,
                 "nation": user.nation,
@@ -192,6 +193,7 @@ def get_live_chat_history_data(db: Session, chatRoomId: str, userCode : str):
         if not partner_data:
             partner_data = {
                 "userId": user.userId,
+                "userCode":user.userCode,
                 "userName": user.userName,
                 "birthday": user.birthday,
                 "nation": user.nation,
