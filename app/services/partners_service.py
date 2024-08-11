@@ -20,6 +20,7 @@ def get_user_list_data(db: Session, current_user_code : str):
 
     results = db.query(
         User.userId.label('userId'),
+        User.userCode.label('userCode'),
         User.userName.label('userName'),
         User.gender.label('gender'),
         User.birthday.label('birthday'),
@@ -48,6 +49,7 @@ def get_user_list_data(db: Session, current_user_code : str):
         if user_id not in user_data:
             user_data[user_id] = {
                 'userId': row.userId,
+                'userCode' : row.userCode,
                 'userName': row.userName,
                 'gender': row.gender,
                 'birthday' : row.birthday,
