@@ -4,6 +4,7 @@ from app.ai_recommendation.recommend_config import SYSTEM_PROMPT_TOPIC_RECOMMEND
 import logging
 from dotenv import load_dotenv
 import os
+from fastapi import HTTPException 
 
 load_dotenv()
 
@@ -154,8 +155,20 @@ def get_quiz_recommendations(user_input):
     prompt = generate_quiz_prompt(user_input)
     logger.info(f"Generated quiz prompt: {prompt}")
     
+    # API 응답 호출
     response = model.generate_content(prompt)
-    response_json = json.loads(response.text)
+    
+    # 응답 검증
+    if not response.candidates:
+        logger.error("No valid response from the model. The response may have been blocked or is empty.")
+        raise HTTPException(status_code=500, detail="No valid response from the AI model.")
+
+    try:
+        response_json = json.loads(response.text)
+    except ValueError as e:
+        logger.error(f"Failed to parse the response: {e}")
+        raise HTTPException(status_code=500, detail="Failed to parse the response from the AI model.")
+    
     logger.info(f"AI quiz response: {response.text}")
 
     # 형식 변환
