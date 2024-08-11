@@ -1,107 +1,79 @@
-import io
 import os
-import speech_recognition as sr
-from datetime import datetime, timedelta
-from queue import Queue
+from datetime import datetime
 from dotenv import load_dotenv
 import requests
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.database.models import ChatMessage
+from app.database.models import ChatMessage, ChatRoom, User
+from fastapi import HTTPException
 
 load_dotenv()
-
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
-# def transcribe_audio(db: Session, chat_room_id: int, model_name="base", non_english=True, energy_threshold=500, record_timeout=2.0, phrase_timeout=1.0):
-#     model = model_name
-#     if model_name != "large" and not non_english:
-#         model = model + ".en"
-#     audio_model = whisper.load_model(model)
-
-#     temp_file = NamedTemporaryFile().name
-#     transcription = ['']
-#     phrase_time = None
-#     last_sample = bytes()
-#     data_queue = Queue()
-
-#     recorder = sr.Recognizer()
-#     recorder.energy_threshold = energy_threshold
-#     recorder.dynamic_energy_threshold = False
-
-#     source = sr.Microphone(sample_rate=16000)
-#     with source:
-#         recorder.adjust_for_ambient_noise(source)
-
-#     def record_callback(_, audio: sr.AudioData) -> None:
-#         data = audio.get_raw_data()
-#         data_queue.put(data)
-
-#     recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
-#     print("Model loaded.\n")
-
-#     while True:
-#         try:
-#             now = datetime.utcnow()
-#             if not data_queue.empty():
-#                 phrase_complete = False
-#                 if phrase_time and now - phrase_time > timedelta(seconds=phrase_timeout):
-#                     last_sample = bytes()
-#                     phrase_complete = True
-#                 phrase_time = now
-
-#                 while not data_queue.empty():
-#                     data = data_queue.get()
-#                     last_sample += data
-
-#                 audio_data = sr.AudioData(last_sample, source.SAMPLE_RATE, source.SAMPLE_WIDTH)
-#                 wav_data = io.BytesIO(audio_data.get_wav_data())
-
-#                 with open(temp_file, 'w+b') as f:
-#                     f.write(wav_data.read())
-
-#                 result = audio_model.transcribe(temp_file)
-#                 text = result['text'].strip()
-
-#                 if phrase_complete:
-#                     transcription.append(text)
-#                 else:
-#                     transcription[-1] = text
-
-#                 os.system('cls' if os.name == 'nt' else 'clear')
-#                 for line in transcription:
-#                     print(line)
-#                 print('', end='', flush=True)
-
-#                 translated_text = translate_text(text, target='en')
-#                 save_to_db(db, chat_room_id, text, translated_text)
-
-#         except KeyboardInterrupt:
-#             break
-
-#     final_transcription = "\n".join(transcription)
-#     return final_transcription
 
 def translate_text(text: str, target: str) -> str:
     url = "https://translation.googleapis.com/language/translate/v2"
     params = {
         'q': text,
         'target': target,
-        'key': GOOGLE_API_KEY
+        'key': os.getenv("GOOGLE_API_KEY")
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
           return response.json()['data']['translations'][0]['translatedText']
     else:
         raise Exception(f"Error: {response.status_code}, {response.text}")
+
+async def determine_target_language(chat_room_id: str, sender_id: str, db: Session):
+    chat_room_users = get_chat_room_users(db, chat_room_id)
     
-def save_to_db(db: Session, chat_room_id: str, original_message: str, translated_message: str, sender_id: str):
+    receiver_info = None
+    for user in chat_room_users:
+        if user["userId"] != sender_id:
+            receiver_info = user
+            break
+        
+    sender_native_language = chat_room_users['user']["nativeLanguage"] if chat_room_users['user']["userId"] == sender_id else chat_room_users['partner']["nativeLanguage"]
+    
+    for lang in receiver_info["learningLanguages"]:
+        if lang["language"] == sender_native_language:
+            return sender_native_language
+    
+    return "en"
+
+def get_chat_room_users(db: Session, chat_room_id: str):
+    chat_room = db.query(ChatRoom).filter(ChatRoom.chatRoomId == chat_room_id).first()
+
+    if not chat_room:
+        raise HTTPException(status_code=404, detail="Chat room not found")
+    
+    user = db.query(User).filter(User.userId == chat_room.userId).first()
+    partner = db.query(User).filter(User.userId == chat_room.partnerId).first()
+    
+    if not user or not partner:
+        raise HTTPException(status_code=404, detail="User or partner not found")
+    
+    return {
+        "user": {
+            "userId": user.userId,
+            "userCode": user.userCode,
+            "nativeLanguage": user.nativeLanguage,
+            "nativeLanguageCode": user.nativeLanguageCode,
+            "learningLanguages": [lang for lang in user.learningLanguages]
+        },
+        "partner": {
+            "userId": partner.userId,
+            "userCode": partner.userCode,
+            "nativeLanguage": partner.nativeLanguage,
+            "nativeLanguageCode": partner.nativeLanguageCode,
+            "learningLanguages": [lang for lang in partner.learningLanguages]
+        }
+    }
+    
+def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str, translated_text: str):
     new_message = ChatMessage(
-        originalMessage=original_message,
-        translatedMessage=translated_message,
-        messageSenderId=sender_id,
-        messageTime=datetime.utcnow(),
-        chatRoomId=chat_room_id
+        chatRoomId=chat_room_id,
+        messageSenderId=user_id,
+        originalMessage=original_text,
+        translatedMessage=translated_text,
+        messageTime=datetime.utcnow()
     )
     db.add(new_message)
     db.commit()
