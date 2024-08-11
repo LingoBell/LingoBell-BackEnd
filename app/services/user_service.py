@@ -2,7 +2,7 @@ import os
 from google.cloud import storage
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
-from app.database.models import User, UserInterest, UserLearningLang, Language, FcmToken
+from app.database.models import User, UserInterest, UserLearningLang, Language, FcmToken, Interest
 from app.database import SessionLocal
 from dotenv import load_dotenv
 
@@ -75,12 +75,17 @@ def get_user_profile_data(db: Session, uid: str):
     if not user:
         return None
     print('dddd',user)
-    user_interests = db.query(UserInterest).filter(UserInterest.userId == user.userId).all()
+    user_interests = db.query(UserInterest, Interest).join(
+        Interest, UserInterest.interestId == Interest.interestId
+    ).filter(UserInterest.userId == user.userId).all()
     
     user_learning_langs = db.query(UserLearningLang, Language).join(
         Language, UserLearningLang.langId == Language.langId).filter(UserLearningLang.userId == user.userId).all()
 
-    interests_list = [interest.interestId for interest in user_interests]
+    interests_list = [interest.UserInterest.interestId for interest in user_interests]
+    
+    interests_name_list = [interest.Interest.interestName for interest in user_interests]
+
     learning_langs_list = [{
         'langId': lang.UserLearningLang.langId,
         'langLevel': lang.UserLearningLang.langLevel,
@@ -97,6 +102,7 @@ def get_user_profile_data(db: Session, uid: str):
         'nation': user.nation,
         'nativeLanguageCode': user.nativeLanguageCode,
         'interests': interests_list,
+        'interestsName': interests_name_list,  # 새로운 interestName 리스트
         'learningLanguages': learning_langs_list,
         'profileImages' : user.profileImages
     }
@@ -119,7 +125,9 @@ def update_user_profile_data(db: Session, uid: str, form_data: dict):
         user_profile.nativeLanguage = form_data['mainLanguage']
         user_profile.nation = form_data.get('nation', {}).get('value')
         user_profile.nativeLanguageCode = form_data['nativeLanguageCode']
-        user_profile.profileImages = form_data['image']
+
+        if 'image' in form_data and form_data['image']:
+            user_profile.profileImages = form_data['image']
         
         db.commit()
         db.refresh(user_profile)
