@@ -48,6 +48,7 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
+        print(data)
         user_id = data.get("userId")
         chat_room_id = data.get("chatRoomId")
         stt_text = data.get("stt_text")
