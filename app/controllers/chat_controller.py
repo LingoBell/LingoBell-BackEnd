@@ -23,6 +23,32 @@ security = HTTPBearer()
 
 router = APIRouter()
 
+# @router.post("/process_stt_and_translate")
+async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
+    print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
+    try:
+        data = await request.json()
+        user_id = data.get("userId")
+        chat_room_id = data.get("chatRoomId")
+        stt_text = data.get("stt_text")
+        print("stt text", stt_text)
+
+        if not user_id or not chat_room_id or not stt_text:
+            raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
+        
+        save_to_db(db, chat_room_id, user_id, stt_text, "")
+        
+        target_language = await determine_target_language(chat_room_id, user_id, db)  
+      
+        translation = translate_text(stt_text, target=target_language)
+        
+        save_to_db(db, chat_room_id, user_id, stt_text, translation)
+        print("save to db 성공")
+        
+        return {"status": "success", "message": "STT result processed"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
@@ -44,6 +70,7 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
+
 @router.post("/pst")
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
     try:
@@ -74,7 +101,6 @@ async def process_stt_and_translate(request: Request, db: Session = Depends(get_
 def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
-
 
 # @router.get("/{chat_room_id}/stt")
 # async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
