@@ -49,72 +49,6 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-# @router.post("/{chat_room_id}/stt")
-# async def get_stt_and_save_to_db(chat_room_id: str, text: str, uid: str, message_time: datetime, db: Session = Depends(get_db)):
-#     try:
-#         print(f"Received request for chat_room_id: {chat_room_id}")
-#         text_payload = {'stt texts': text}
-
-#         response = requests.get(f"{GPU_SERVER_URL}/{chat_room_id}/stt", json=text_payload)
-#         print(f"Response from GPU server: {response.status_code}")
-        
-#         if response.status_code != 200:
-#             raise HTTPException(status_code=response.status_code, detail=response.text)
-
-#         transcription_result = response.json()
-#         print(f"Transcription result from GPU server: {transcription_result}")
-
-#         save_to_db(db, chat_room_id, transcription_result, message_time, uid)
-
-#         return transcription_result
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# @router.post("/{chat_room_id}/translations")
-# def create_translation(chat_room_id: str, original_text: str, db: Session = Depends(get_db)):
-#     translated_text = translate_text(original_text, target='en')
-#     save_to_db(db, chat_room_id, original_text, translated_text)
-#     return {"original_text": original_text, "translated_text": translated_text}
-
-# @router.websocket("/ws/{chat_room_id}")
-# async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, db: Session = Depends(get_db)):
-#     await websocket.accept()
-    
-#     user_languages = {}
-    
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             data = json.loads(data)
-            
-#             if data.get("type") == "language":
-#                 user_id = data.get("userId")
-#                 user_data = get_user_profile_data(db, user_id)
-#                 user_languages[user_id] = {
-#                     "nativeLanguage": user_data("nativeLanguage"),
-#                     "learningLanguages": [lang['language'] for lang in user_data['learningLanguages']]
-#                 }
-#                 print(f"User {user_id} languages set to: {user_languages[user_id]}")
-#             else:
-#                 original_text = data.get("stt_text", "")
-#                 sender_id = data.get("userId")
-                
-#                 if original_text:
-#                     print(f"Received STT data from {sender_id}: {original_text}")
-                        
-#                     for user_id, lang_info in user_languages.items():
-#                         if user_id != sender_id:
-#                             target_language = lang_info["nativeLanguage"]
-#                             translate_text = translate_text(original_text, target=target_language)
-#                             print(f"Translated text for {user_id} ({target_language}): {translate_text}")
-                                
-#                             save_to_db(db, chat_room_id, sender_id, original_text, translate_text)
-#     except WebSocketDisconnect:
-#         print(f"Websocket disconnected for chat room: {chat_room_id}")
-#     except Exception as e:
-#         print(f"Error websocket_endpoint(): {e}")
-#         await websocket.close()
-
 @router.post("/process_stt_and_translate")
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
     try:
@@ -125,12 +59,16 @@ async def process_stt_and_translate(request: Request, db: Session = Depends(get_
 
         if not user_id or not chat_room_id or not stt_text:
             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
-
-        target_language = await determine_target_language(chat_room_id, user_id, db)
+        
+        save_to_db(db, chat_room_id, user_id, stt_text, "")
+        
+        target_language = await determine_target_language(chat_room_id, user_id, db)  
+      
         translation = translate_text(stt_text, target=target_language)
-
+        
         save_to_db(db, chat_room_id, user_id, stt_text, translation)
-
+        print("save to db 성공")
+        
         return {"status": "success", "message": "STT result processed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

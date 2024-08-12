@@ -58,7 +58,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
                 return response
 
-        if request.url.path in ["/docs", "/openapi.json"]:
+        if request.url.path in ["/docs", "/openapi.json", "/api/chats/process_stt_and_translate"]:
             return await call_next(request)
 
         # 1. 토큰을 가져온다(request.headers['Authorization'])
