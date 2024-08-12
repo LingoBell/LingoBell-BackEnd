@@ -55,13 +55,13 @@ async def process_stt_and_translate(request: Request, db: Session = Depends(get_
         if not user_id or not chat_room_id or not stt_text:
             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
         
-        save_to_db(db, chat_room_id, user_id, stt_text, "")
+        save_to_db(db = db, chat_room_id = chat_room_id, user_id= user_id, stt_text= stt_text, translated_text="")
         
         target_language = await determine_target_language(chat_room_id, user_id, db)  
       
         translation = translate_text(stt_text, target=target_language)
         
-        save_to_db(db, chat_room_id, user_id, stt_text, translation)
+        save_to_db(db = db, chat_room_id = chat_room_id, user_id= user_id, stt_text= stt_text, translated_text=translation)
         print("save to db 성공")
         
         return {"status": "success", "message": "STT result processed"}
