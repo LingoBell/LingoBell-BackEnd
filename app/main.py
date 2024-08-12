@@ -1,7 +1,7 @@
 # 애플리케이션의 진입점
 from dotenv import load_dotenv
 load_dotenv()
-
+from fastapi.responses import HTMLResponse
 import os
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +25,7 @@ transcription_result = ""
 security = HTTPBearer()
 
 origins = [
+    "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:9000",
     # 필요한 도메인 추가
@@ -37,7 +38,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/", StaticFiles(directory="./dist"), name="dist")
+
 # accessToken 검증 함수
 def verify_token(auth_token: str): 
     try:
@@ -56,7 +57,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if request.method == "OPTIONS":
                 response = JSONResponse(status_code=200, content='CORS preflight')
-                response.headers["Access-Control-Allow-Origin"] = "http://localhost:9000"
+                response.headers["Access-Control-Allow-Origin"] = "http://localhost:8000"
                 response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS, DELETE, PUT"
                 response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type, Accept"
                 response.headers["Access-Control-Allow-Credentials"] = "true"
@@ -64,10 +65,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 return response
 
         if request.url.path in ["/docs", "/openapi.json", "/api/chats/pst"]:
-            print(":jasdkljflkasjdfkjdslkfjlkdasfkjasdlkjfaklsdjflkdsjklj;ds")
             return await call_next(request)
+        
         if not request.url.path.startswith('/api'):
+            print('test')
             return await call_next(request)
+        
         # 1. 토큰을 가져온다(request.headers['Authorization'])
         auth_header = request.headers.get('Authorization')
         # 테스트용 코드(development에서만 사용가능하도록 만들어냄)
@@ -93,10 +96,12 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # 2. 토큰을 검증한다
         user_info = verify_token(token)
+        print(request.url.path)
         # print('user_info:',user_info)
-
+        
         # 2-1. 검증에 실패하면 status를 403으로 반환한다  
         if user_info is None:
+            print(request.url.path)
             return JSONResponse(status_code=403, content={'status':403})
 
         # 3. 유저 정보를 request안의 user라는 키에 넣어준다
@@ -181,8 +186,14 @@ async def process_stt_and_translate(request: Request):
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
 app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
+app.mount("/", StaticFiles(directory="./dist"), name="dist")
 # app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
-
+@app.middleware("http")
+async def custom_404_middleware(request: Request, call_next):
+    response = await call_next(request)
+    if response.status_code == 404 and not request.url.path.startswith(("/api")):
+        return HTMLResponse(content=open("./dist/index.html").read(), status_code=200)
+    return response 
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

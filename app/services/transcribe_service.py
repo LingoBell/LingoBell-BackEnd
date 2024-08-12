@@ -110,12 +110,12 @@ def get_chat_room_users(db: Session, chat_room_id: str):
 def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str, translated_text: str):
     try:
         print("save 실행")
-        original_text_parsed = json.loads(original_text).get("transcription", original_text)
+        # original_text_parsed = json.loads(original_text).get("transcription", original_text)
               
         new_message = ChatMessage(
             chatRoomId=chat_room_id,
             messageSenderId=user_id,
-            originalMessage=original_text_parsed,
+            originalMessage=original_text,
             translatedMessage=translated_text,
             messageTime=datetime.utcnow()
         )

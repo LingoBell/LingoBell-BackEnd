@@ -10,7 +10,7 @@ router = APIRouter()
 security = HTTPBearer()
 
 
-@router.post("/") #유저 정보 저장
+@router.post("") #유저 정보 저장
 async def create_user_profile(request : Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     if not uid:
