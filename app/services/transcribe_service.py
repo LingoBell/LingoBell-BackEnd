@@ -107,7 +107,7 @@ def get_chat_room_users(db: Session, chat_room_id: str):
     }
 
     
-def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str, translated_text: str):
+def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str, translated_text: str, messageId: int):
     try:
         print("save 실행")
         # original_text_parsed = json.loads(original_text).get("transcription", original_text)
@@ -124,6 +124,7 @@ def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str,
         db.commit()
         db.refresh(new_message)
         print(f"Message saved successfully to DB with messageId={new_message.messageId}")
+        
     except Exception as e:
         print(f"Error saving to DB: {e}")
         db.rollback()
