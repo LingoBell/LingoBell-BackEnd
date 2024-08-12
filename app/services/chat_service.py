@@ -140,7 +140,6 @@ def get_live_chat_list(db: Session, uid: str):
         if interest and user_interest:
             if interest.interestName not in chat_rooms[chat_room_id]['interests']:
                 chat_rooms[chat_room_id]['interests'].append(interest.interestName)
-
     return list(chat_rooms.values())
 
 def get_live_chat_data(db: Session, chatRoomId: str):
@@ -447,6 +446,6 @@ def request_chat_room_notification(chat_room_id : str, db:Session, uid : str ):
         title=f'🎉{partner.userName}, {user.userName} just invites you!',
         body=f'🌍Learn {user.nativeLanguage} with {user.userName}!',
         image = 'https://storage.googleapis.com/lingobellstorage/lingobellLogo.png',
-        link=f"http://localhost:9000/live-chat/{chat_room_id}",
+        link=f"https://www.lingobell.xyz/live-chat/{chat_room_id}",
         chat_room_id=chat_room_id,
         db=db)
