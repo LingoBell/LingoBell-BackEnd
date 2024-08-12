@@ -441,6 +441,7 @@ def request_chat_room_notification(chat_room_id : str, db:Session, uid : str ):
 
     partner = db.query(User).filter(User.userId == recipientId).first()
 
+
     send_notification_to_user(
         recipientId,
         title=f'🎉{partner.userName}, {user.userName} just invites you!',
