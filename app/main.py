@@ -156,32 +156,32 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     # print(request.state.user)
     return data
 
-@app.post("/api/chats/pst")
-async def process_stt_and_translate(request: Request):
-                                    # , db: Session = Depends(get_db)):
-    print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
-    try:
-        data = await request.json()
-        user_id = data.get("userId")
-        chat_room_id = data.get("chatRoomId")
-        stt_text = data.get("stt_text")
-        print("stt text", stt_text)
+# @app.post("/api/chats/pst")
+# async def process_stt_and_translate(request: Request):
+#                                     # , db: Session = Depends(get_db)):
+#     print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
+#     try:
+#         data = await request.json()
+#         user_id = data.get("userId")
+#         chat_room_id = data.get("chatRoomId")
+#         stt_text = data.get("stt_text")
+#         print("stt text", stt_text)
 
-        if not user_id or not chat_room_id or not stt_text:
-            raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
+#         if not user_id or not chat_room_id or not stt_text:
+#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
         
-        """  save_to_db(db, chat_room_id, user_id, stt_text, "")
+#         """  save_to_db(db, chat_room_id, user_id, stt_text, "")
         
-        target_language = await determine_target_language(chat_room_id, user_id, db)  
+#         target_language = await determine_target_language(chat_room_id, user_id, db)  
       
-        translation = translate_text(stt_text, target=target_language)
+#         translation = translate_text(stt_text, target=target_language)
         
-        save_to_db(db, chat_room_id, user_id, stt_text, translation)
-        print("save to db 성공") """
+#         save_to_db(db, chat_room_id, user_id, stt_text, translation)
+#         print("save to db 성공") """
         
-        return {"status": "success", "message": "STT result processed"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#         return {"status": "success", "message": "STT result processed"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
