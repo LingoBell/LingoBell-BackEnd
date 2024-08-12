@@ -34,12 +34,13 @@ def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
     print('상태', chatRoomId)
     return update_live_chat_status(db, chatRoomId)
 
-@router.get('/')
+@router.get('')
 def get_live_chats(request: Request, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
+    
     live_chats = get_live_chat_list(db, uid)
-    if not live_chats:
-        raise HTTPException(status_code=404, detail="No live chats found")
+    # if not live_chats:
+        # raise HTTPException(status_code=404, detail="No live chats found")
     return live_chats
 
 @router.get("/{chatRoomId}")
@@ -50,7 +51,7 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
 
-@router.post("/")
+@router.post("")
 def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
