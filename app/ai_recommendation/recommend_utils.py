@@ -1,4 +1,5 @@
 import json
+from deep_translator import GoogleTranslator
 import google.generativeai as genai
 from app.ai_recommendation.recommend_config import SYSTEM_PROMPT_TOPIC_RECOMMEND, SYSTEM_PROMPT_QUIZ_RECOMMEND
 import logging
