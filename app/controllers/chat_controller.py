@@ -90,7 +90,7 @@ async def process_stt_and_translate(request: Request, db: Session = Depends(get_
       
         translation = translate_text(stt_text, target=target_language)
         
-        save_to_db(db = db, chat_room_id = chat_room_id, user_id= user_id, original_text= stt_text, translated_text=translationß)
+        save_to_db(db = db, chat_room_id = chat_room_id, user_id= user_id, original_text= stt_text, translated_text=translation)
         print("save to db 성공")
         
         return {"status": "success", "message": "STT result processed"}
