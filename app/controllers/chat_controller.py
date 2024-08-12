@@ -44,13 +44,7 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
-
-@router.post("")
-def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
-    uid = request.state.user['uid']
-    return create_chat_room(db, chat_room, uid)
-
-@router.post("/process_stt_and_translate")
+@router.post("/pst")
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
@@ -73,6 +67,13 @@ async def process_stt_and_translate(request: Request, db: Session = Depends(get_
         return {"status": "success", "message": "STT result processed"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("")
+def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
+    uid = request.state.user['uid']
+    return create_chat_room(db, chat_room, uid)
+
 
 # @router.get("/{chat_room_id}/stt")
 # async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):

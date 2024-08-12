@@ -64,7 +64,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
                 return response
 
-        if request.url.path in ["/docs", "/openapi.json", "/api/chats/process_stt_and_translate"]:
+        if request.url.path in ["/docs", "/openapi.json", "/api/chats/pst"]:
             return await call_next(request)
         
         if not request.url.path.startswith('/api'):
