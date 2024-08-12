@@ -3,19 +3,15 @@ import os
 
 load_dotenv()
 
-import base64
 from email.mime import audio
-import io
-import logging
 import os
 import shutil
 import json
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request, requests, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
-from app.services.transcribe_service import translate_text, save_to_db
-from app.services.user_service import get_user_profile_data
+from app.services.transcribe_service import translate_text, save_to_db, determine_target_language
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
@@ -26,8 +22,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 
 router = APIRouter()
-
-GPU_SERVER_URL = os.getenv('GPU_SERVER_URL')
 
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
@@ -56,97 +50,70 @@ def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(ge
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
 
-# @router.post("/{chat_room_id}/stt")
-# async def get_stt_and_save_to_db(chat_room_id: str, text: str, uid: str, message_time: datetime, db: Session = Depends(get_db)):
-#     try:
-#         print(f"Received request for chat_room_id: {chat_room_id}")
-#         text_payload = {'stt texts': text}
-
-#         response = requests.get(f"{GPU_SERVER_URL}/{chat_room_id}/stt", json=text_payload)
-#         print(f"Response from GPU server: {response.status_code}")
-        
-#         if response.status_code != 200:
-#             raise HTTPException(status_code=response.status_code, detail=response.text)
-
-#         transcription_result = response.json()
-#         print(f"Transcription result from GPU server: {transcription_result}")
-
-#         save_to_db(db, chat_room_id, transcription_result, message_time, uid)
-
-#         return transcription_result
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-# @router.post("/{chat_room_id}/translations")
-# def create_translation(chat_room_id: str, original_text: str, db: Session = Depends(get_db)):
-#     translated_text = translate_text(original_text, target='en')
-#     save_to_db(db, chat_room_id, original_text, translated_text)
-#     return {"original_text": original_text, "translated_text": translated_text}
-
-@router.websocket("/ws/{chat_room_id}")
-async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, db: Session = Depends(get_db)):
-    await websocket.accept()
-    
-    user_languages = {}
-    
+@router.post("/process_stt_and_translate")
+async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
     try:
-        while True:
-            data = await websocket.receive_text()
-            data = json.loads(data)
-            
-            if data.get("type") == "language":
-                user_id = data.get("userId")
-                user_data = get_user_profile_data(db, user_id)
-                user_languages[user_id] = {
-                    "nativeLanguage": user_data("nativeLanguage"),
-                    "learningLanguages": [lang['language'] for lang in user_data['learningLanguages']]
-                }
-                print(f"User {user_id} languages set to: {user_languages[user_id]}")
-            else:
-                original_text = data.get("stt_text", "")
-                sender_id = data.get("userId")
-                
-                if original_text:
-                    print(f"Received STT data from {sender_id}: {original_text}")
-                        
-                    for user_id, lang_info in user_languages.items():
-                        if user_id != sender_id:
-                            target_language = lang_info["nativeLanguage"]
-                            translate_text = translate_text(original_text, target=target_language)
-                            print(f"Translated text for {user_id} ({target_language}): {translate_text}")
-                                
-                            save_to_db(db, chat_room_id, sender_id, original_text, translate_text)
-    except WebSocketDisconnect:
-        print(f"Websocket disconnected for chat room: {chat_room_id}")
+        data = await request.json()
+        user_id = data.get("userId")
+        chat_room_id = data.get("chatRoomId")
+        stt_text = data.get("stt_text")
+
+        if not user_id or not chat_room_id or not stt_text:
+            raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
+        
+        save_to_db(db, chat_room_id, user_id, stt_text, "")
+        
+        target_language = await determine_target_language(chat_room_id, user_id, db)  
+      
+        translation = translate_text(stt_text, target=target_language)
+        
+        save_to_db(db, chat_room_id, user_id, stt_text, translation)
+        print("save to db 성공")
+        
+        return {"status": "success", "message": "STT result processed"}
     except Exception as e:
-        print(f"Error websocket_endpoint(): {e}")
-        await websocket.close()
+        raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/{chat_room_id}/stt")
-async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+# @router.get("/{chat_room_id}/stt")
+# async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+#     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
+#     if timestamp:
+#         query = query.filter(ChatMessage.messageTime > timestamp)
+#     messages = query.all()
+#     response_data = [
+#         {
+#             "type": "",
+#             "messageSenderId": message.messageSenderId,
+#             "originalMessage": message.originalMessage,
+#             "translatedMessage": message.translatedMessage
+#         } for message in messages
+#     ]
+#     return {"messages": response_data}
+
+# @router.get("/{chat_room_id}/translations")
+# def get_translations(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
+#     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
+#     if timestamp:
+#         query = query.filter(ChatMessage.messageTime > timestamp)
+#     messages = query.all()
+#     response_data = [
+#         {
+#             "type": "me" if message.messageSenderId == 1 else "partner",
+#             "messageSenderId": message.messageSenderId,
+#             "originalMessage": message.originalMessage,
+#             "translatedMessage": message.translatedMessage
+#         } for message in messages
+#     ]
+#     return {"messages": response_data}
+
+@router.get("/{chat_room_id}/messages")
+async def get_stt_and_translation(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
     if timestamp:
         query = query.filter(ChatMessage.messageTime > timestamp)
     messages = query.all()
     response_data = [
         {
-            "type": "",
-            "messageSenderId": message.messageSenderId,
-            "originalMessage": message.originalMessage,
-            "translatedMessage": message.translatedMessage
-        } for message in messages
-    ]
-    return {"messages": response_data}
-
-@router.get("/{chat_room_id}/translations")
-def get_translations(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
-    query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
-    if timestamp:
-        query = query.filter(ChatMessage.messageTime > timestamp)
-    messages = query.all()
-    response_data = [
-        {
-            "type": "me" if message.messageSenderId == 1 else "partner",
             "messageSenderId": message.messageSenderId,
             "originalMessage": message.originalMessage,
             "translatedMessage": message.translatedMessage
