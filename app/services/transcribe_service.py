@@ -114,7 +114,7 @@ def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str,
         new_message = ChatMessage(
             chatRoomId=chat_room_id,
             messageSenderId=user_id,
-            originalMessage=original_text_parsed,
+            originalMessage=original_text,
             translatedMessage=translated_text,
             messageTime=datetime.utcnow()
         )
