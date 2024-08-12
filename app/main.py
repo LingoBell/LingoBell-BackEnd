@@ -16,6 +16,10 @@ from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
+from app.database.models import ChatMessage
+from datetime import datetime
+from fastapi.staticfiles import StaticFiles
+
 app = FastAPI()
 transcription_result = ""
 security = HTTPBearer()
@@ -33,7 +37,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.mount("/", StaticFiles(directory="./dist"), name="dist")
 # accessToken 검증 함수
 def verify_token(auth_token: str): 
     try:
@@ -44,6 +48,7 @@ def verify_token(auth_token: str):
         # return False
         print(e)
         raise HTTPException(status_code=401, detail="Invalid ID token")
+    
 
 ## auth middleware 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -60,7 +65,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         if request.url.path in ["/docs", "/openapi.json"]:
             return await call_next(request)
-
+        if not request.url.path.startswith('/api'):
+            return await call_next(request)
         # 1. 토큰을 가져온다(request.headers['Authorization'])
         auth_header = request.headers.get('Authorization')
         # 테스트용 코드(development에서만 사용가능하도록 만들어냄)
