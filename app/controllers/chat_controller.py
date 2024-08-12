@@ -73,6 +73,7 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
 
 @router.post("/pst")
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
+    print('dhjdhdhdhddhdh')
     try:
         data = await request.json()
         print(data)
