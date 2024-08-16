@@ -22,6 +22,7 @@ async def create_user_profile(request : Request, db: Session = Depends(get_db)):
         return {"data" : user_profile}
         
     except Exception as e:
+        print('add_user_profile_data ERROR:', e)
         raise HTTPException(status_code=400, detail="Invalid JSON data")
 
     # print('User_Profile',form_data)
