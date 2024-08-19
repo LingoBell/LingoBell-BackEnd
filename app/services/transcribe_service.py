@@ -124,6 +124,7 @@ def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str,
         db.commit()
         db.refresh(new_message)
         print(f"Message saved successfully to DB with messageId={new_message.messageId}")
+        
     except Exception as e:
         print(f"Error saving to DB: {e}")
         db.rollback()

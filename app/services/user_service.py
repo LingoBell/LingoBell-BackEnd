@@ -28,7 +28,7 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
             nativeLanguage = form_data['mainLanguage'],
             nation=form_data.get('nation', {}).get('value'),
             nativeLanguageCode = form_data['nativeLanguageCode'],
-            profileImages = form_data['image']
+            profileImages = form_data.get('image')
         )
         db.add(user_profile)
         db.commit()
@@ -67,7 +67,7 @@ def add_user_profile_data(db : Session, uid : str, form_data : dict):
         return user_profile
     except Exception as e:
         db.rollback()
-        print('ERROR')
+        print('ERROR',e)
         raise HTTPException(status_code=400, detail=str(e))
     
 def get_user_profile_data(db: Session, uid: str):
@@ -184,22 +184,23 @@ def save_fcm_token(uid : str ,token : str, db: Session):
     existing_token = db.query(FcmToken).filter(FcmToken.token == token).first()
     if existing_token:
         print("Token already exists")
-        raise HTTPException(status_code=400, detail="Token already exists")
+        raise HTTPException(status_code=200, detail="Token already exists")
 
-    try : 
-        fcm_token = FcmToken(
-            userId = user.userId,
-            token = token
-        )
+    else:
+        try : 
+            fcm_token = FcmToken(
+                userId = user.userId,
+                token = token
+            )
 
-        db.add(fcm_token)
-        db.commit()
-        db.refresh(fcm_token)
+            db.add(fcm_token)
+            db.commit()
+            db.refresh(fcm_token)
 
-        return fcm_token
-    except Exception as e:
-        db.rollback()
-        print('ERROR')
-        raise HTTPException(status_code=400, detail=str(e))
+            return fcm_token
+        except Exception as e:
+            db.rollback()
+            print('ERROR')
+            raise HTTPException(status_code=400, detail=str(e))
 
     
