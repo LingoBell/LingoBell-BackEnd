@@ -7,11 +7,14 @@ from email.mime import audio
 import os
 import shutil
 import json
+import base64
+import io
+import soundfile as sf
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
-from app.services.transcribe_service import translate_text, save_to_db, determine_target_language
+from app.services.transcribe_service import transcribe_audio_with_openai, translate_text, save_to_db, determine_target_language
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
@@ -23,31 +26,28 @@ security = HTTPBearer()
 
 router = APIRouter()
 
-# # @router.post("/process_stt_and_translate")
-# async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
-#     print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
-#     try:
-#         data = await request.json()
-#         user_id = data.get("userId")
-#         chat_room_id = data.get("chatRoomId")
-#         stt_text = data.get("stt_text")
-#         print("stt text", stt_text)
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[str, WebSocket] = {}
 
-#         if not user_id or not chat_room_id or not stt_text:
-#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
-        
-#         save_to_db(db, chat_room_id, user_id, stt_text, "")
-        
-#         target_language = await determine_target_language(chat_room_id, user_id, db)  
-      
-#         translation = translate_text(stt_text, target=target_language)
-        
-#         save_to_db(db, chat_room_id, user_id, stt_text, translation)
-#         print("save to db 성공")
-        
-#         return {"status": "success", "message": "STT result processed"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+    async def connect(self, user_id: str, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections[user_id] = websocket
+
+    def disconnect(self, user_id: str):
+        if user_id in self.active_connections:
+            del self.active_connections[user_id]
+
+    async def send_message(self, message: str, user_id: str):
+        websocket = self.active_connections.get(user_id)
+        if websocket:
+            await websocket.send_text(message)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections.values():
+            await connection.send_text(message)
+
+manager = ConnectionManager()
 
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
@@ -70,6 +70,32 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
     if chat_data is None:
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
+
+@router.websocket("/ws/{chat_room_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id: str, chat_room_id: str, db: Session = Depends(get_db)):
+    await manager.connect(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            if message.get("type") == "audio":
+                audio_data = base64.b64decode(message.get("blob"))
+                audio_wav_io = io.BytesIO(audio_data)
+                audio_wav_io.seek(0)
+                audio_chunk, _ = sf.read(audio_wav_io, dtype="float32")
+
+                transcript = transcribe_audio_with_openai(audio_chunk)
+                if transcript:
+                    target_language = await determine_target_language(chat_room_id, user_id, db)
+                    translation = translate_text(transcript, target=target_language)
+                    save_to_db(db, chat_room_id, user_id, transcript, translation)
+                    await manager.send_message(json.dumps({"transcript": transcript, "translation": translation}), user_id)
+
+    except WebSocketDisconnect:
+        manager.disconnect(user_id)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+        manager.disconnect(user_id)
 
 @router.post("/pst")
 async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):

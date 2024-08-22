@@ -1,5 +1,7 @@
 import json
 import os
+import io
+import soundfile as sf
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
@@ -8,6 +10,32 @@ from app.database.models import ChatMessage, ChatRoom, User, UserLearningLang, L
 from fastapi import HTTPException
 
 load_dotenv()
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
+
+def transcribe_audio_with_openai(audio_chunk):
+    """OpenAI API를 사용하여 오디오를 텍스트로 변환하는 함수"""
+    try:
+        buffer = io.BytesIO()
+        sf.write(buffer, audio_chunk, samplerate=16000, format='WAV')
+        buffer.seek(0)
+
+        response = requests.post(
+            "https://api.openai.com/v1/audio/transcriptions",
+            headers={"Authorization": f"Bearer {openai_api_key}"},
+            files={"file": ("audio.wav", buffer, "audio/wav")},
+            data={"model": "whisper-1"}
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("text", "")
+        else:
+            print(f"OpenAI API error: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Error in transcribe_audio_with_openai: {e}")
+        return None
 
 def translate_text(text: str, target: str) -> str:
     url = "https://translation.googleapis.com/language/translate/v2"
