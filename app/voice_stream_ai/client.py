@@ -28,8 +28,10 @@ class Client:
         samples_width (int): The width of each audio sample in bits.
     """
 
-    def __init__(self, client_id, sampling_rate, samples_width):
+    def __init__(self, client_id, sampling_rate, samples_width, chat_room_id, user_id):
         self.client_id = client_id
+        self.chat_room_id = chat_room_id
+        self.user_id = user_id
         self.buffer = bytearray()
         self.scratch_buffer = bytearray()
         self.config = {
@@ -77,5 +79,5 @@ class Client:
 
     def process_audio(self, websocket, vad_pipeline, asr_pipeline):
         self.buffering_strategy.process_audio(
-            websocket, vad_pipeline, asr_pipeline
+            websocket, vad_pipeline, asr_pipeline, self.user_id, self.chat_room_id
         )

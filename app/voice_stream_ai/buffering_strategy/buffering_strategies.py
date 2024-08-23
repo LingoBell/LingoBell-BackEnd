@@ -3,6 +3,8 @@ import json
 import os
 import time
 
+from app.services.transcribe_service import process_stt_and_translate
+
 from .buffering_strategy_interface import BufferingStrategyInterface
 
 
@@ -57,7 +59,7 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
 
         self.processing_flag = False
 
-    def process_audio(self, websocket, vad_pipeline, asr_pipeline):
+    def process_audio(self, websocket, vad_pipeline, asr_pipeline, user_id, chat_room_id):
         """
         Process audio chunks by checking their length and scheduling
         asynchronous processing.
@@ -87,10 +89,10 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             self.processing_flag = True
             # Schedule the processing in a separate task
             asyncio.create_task(
-                self.process_audio_async(websocket, vad_pipeline, asr_pipeline)
+                self.process_audio_async(websocket, vad_pipeline, asr_pipeline, user_id, chat_room_id)
             )
 
-    async def process_audio_async(self, websocket, vad_pipeline, asr_pipeline):
+    async def process_audio_async(self, websocket, vad_pipeline, asr_pipeline, user_id, chat_room_id):
         """
         Asynchronously process audio for activity detection and transcription.
 
@@ -121,9 +123,18 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             transcription = await asr_pipeline.transcribe(self.client)
             if transcription["text"] != "":
                 end = time.time()
+                print(self.client.client_id)
                 transcription["processing_time"] = end - start
+                transcription['chat_room_id'] = chat_room_id
+                transcription['user_id'] = user_id
+                
+                translation = await process_stt_and_translate(transcription["text"], chat_room_id= chat_room_id, user_id= user_id)
+                transcription['translated_message'] = translation
                 json_transcription = json.dumps(transcription)
                 await websocket.send(json_transcription)
+                print('websocket', websocket.state)
+                print(f"WebSocket state: {websocket.state}")
+                print(f"Client IP: {websocket.remote_address[0]}, Port: {websocket.remote_address[1]}")
             self.client.scratch_buffer.clear()
             self.client.increment_file_counter()
 
