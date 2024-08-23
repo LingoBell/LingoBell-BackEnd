@@ -1,6 +1,8 @@
 from dotenv import load_dotenv
 import os
 
+from app.services.transcribe_service import process_stt_and_translate
+
 load_dotenv()
 
 from email.mime import audio
@@ -8,10 +10,10 @@ import os
 import shutil
 import json
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
-from app.services.transcribe_service import translate_text, save_to_db, determine_target_language
+# from app.services.transcribe_service import translate_text, save_to_db, determine_target_language
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
@@ -71,30 +73,30 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
 
-@router.post("/pst")
-async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
-    try:
-        data = await request.json()
-        user_id = data.get("userId")
-        chat_room_id = data.get("chatRoomId")
-        stt_text = data.get("stt_text")
+# @router.post("/pst")
+# async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
+#     try:
+#         data = await request.json()
+#         user_id = data.get("userId")
+#         chat_room_id = data.get("chatRoomId")
+#         stt_text = data.get("stt_text")
 
-        if not user_id or not chat_room_id or not stt_text:
-            raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
+#         if not user_id or not chat_room_id or not stt_text:
+#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
         
-        # 타겟 언어를 결정
-        target_language = await determine_target_language(chat_room_id, user_id, db)
+#         # 타겟 언어를 결정
+#         target_language = await determine_target_language(chat_room_id, user_id, db)
       
-        # 텍스트 번역
-        translation = translate_text(stt_text, target=target_language)
+#         # 텍스트 번역
+#         translation = translate_text(stt_text, target=target_language)
         
-        # 번역된 텍스트와 STT 텍스트를 함께 DB에 저장
-        save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
-        print("save to db 성공")
+#         # 번역된 텍스트와 STT 텍스트를 함께 DB에 저장
+#         save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
+#         print("save to db 성공")
         
-        return {"status": "success", "message": "STT result processed"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#         return {"status": "success", "message": "STT result processed"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("")
 def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
@@ -194,3 +196,35 @@ def get_chat_room_info_for_notification(request : Request, chat_room_id : str, d
         print('error', e)
         raise HTTPException(status_code=400, detail="Invalid chatRoom data")
 
+
+async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
+    print('들어와')
+    await websocket.accept()
+    
+    while True:
+        data = await websocket.receive_text()
+        json_data = json.loads(data)
+        
+        if json_data['type'] == 'audio':
+            # 오디오 데이터 처리 (STT 서버로 전달)
+            stt_result = process_audio(json_data['audio'])
+            print('안녕하세요?')
+            
+            # STT 결과를 데이터베이스에 저장
+            # save_stt_result(db, chat_room_id, stt_result)
+
+            # Translation
+            translation = process_stt_and_translate(chat_room_id, user_id, stt_result)
+            
+            # 클라이언트에 STT 결과 전송
+            await websocket.send_json({"type": "stt_result", "text": stt_result, "translation": translation})
+        
+        elif json_data['type'] == 'message':
+            print('ㅎㅎㅎㅎ')
+
+def process_audio(audio_data):
+    stt_result = audio_data
+    # STT 서버로 오디오 데이터 전달 및 결과 반환
+    # 이 부분은 STT 서버의 구현에 따라 달라질 수 있습니다
+    # ...
+    return stt_result
