@@ -6,13 +6,16 @@ import requests
 from app.database.models import ChatMessage, ChatRoom, User, UserLearningLang, Language
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.database import SessionLocal, get_db
 
 
 
 load_dotenv()
 
-async def process_stt_and_translate(stt_result: str, chat_room_id: str, user_id: str, db: Session = Depends(get_db)):
+
+
+async def process_stt_and_translate(stt_result: str, chat_room_id: str, user_id: str):
+    db = SessionLocal()
     try:
         stt_text = stt_result
 
@@ -26,7 +29,7 @@ async def process_stt_and_translate(stt_result: str, chat_room_id: str, user_id:
         translation = translate_text(stt_text, target=target_language)
         
         # 번역된 텍스트와 STT 텍스트를 함께 DB에 저장
-        save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
+        # save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
         print("save to db 성공")
         
         return translation

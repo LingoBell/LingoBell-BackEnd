@@ -4,6 +4,7 @@ import ssl
 import uuid
 
 import websockets
+import json
 
 from app.controllers.chat_controller import websocket_endpoint
 from app.services.transcribe_service import process_stt_and_translate
@@ -81,7 +82,6 @@ class Server:
                     user_id,
                     stt_result
                 )
-                
                 # 결과를 클라이언트에 전송
                 await websocket.send(json.dumps({
                     "type": "transcription",
@@ -93,7 +93,11 @@ class Server:
 
     async def handle_websocket(self, websocket):
         client_id = str(uuid.uuid4())
-        client = Client(client_id, self.sampling_rate, self.samples_width)
+        initial_message = await websocket.recv()
+        config = json.loads(initial_message)
+        user_id = config.get('userId')
+        chat_room_id = config.get('chatRoomId')
+        client = Client(client_id, self.sampling_rate, self.samples_width, chat_room_id, user_id)
         self.connected_clients[client_id] = client
 
         print(f"Client {client_id} connected")
