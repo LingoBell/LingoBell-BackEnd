@@ -3,11 +3,35 @@ import os
 from datetime import datetime
 from dotenv import load_dotenv
 import requests
-from sqlalchemy.orm import Session
 from app.database.models import ChatMessage, ChatRoom, User, UserLearningLang, Language
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.database import get_db
+
+
 
 load_dotenv()
+
+async def process_stt_and_translate(stt_result: str, chat_room_id: str, user_id: str, db: Session = Depends(get_db)):
+    try:
+        stt_text = stt_result
+
+        if not user_id or not chat_room_id or not stt_text:
+            raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
+        
+        # 타겟 언어를 결정
+        target_language = await determine_target_language(chat_room_id, user_id, db)
+      
+        # 텍스트 번역
+        translation = translate_text(stt_text, target=target_language)
+        
+        # 번역된 텍스트와 STT 텍스트를 함께 DB에 저장
+        save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
+        print("save to db 성공")
+        
+        return translation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 def translate_text(text: str, target: str) -> str:
     url = "https://translation.googleapis.com/language/translate/v2"
