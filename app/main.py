@@ -36,7 +36,7 @@ origins = [
     "http://localhost:8000",
     "http://localhost:3000",
     "http://localhost:9000",
-    "http://localhost:8080"
+    "http://localhost:8080",
     # 필요한 도메인 추가
 ]
 
@@ -226,7 +226,7 @@ app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
 app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
 app.mount("/", StaticFiles(directory="./dist"), name="dist")
-app.include_router(face_controller.router, prefix="/api/faces", tags=["faces"])
+app.include_router(face_controller.router, prefix="/ws/faces", tags=["faces"])
 @app.middleware("http")
 async def custom_404_middleware(request: Request, call_next):
     response = await call_next(request)
