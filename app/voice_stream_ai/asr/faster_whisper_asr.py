@@ -1,6 +1,6 @@
 import os
 
-from faster_whisper import WhisperModel
+# from faster_whisper import WhisperModel
 
 from app.voice_stream_ai.audio_utils import save_audio_to_file
 
@@ -116,9 +116,9 @@ class FasterWhisperASR(ASRInterface):
     def __init__(self, **kwargs):
         model_size = kwargs.get("model_size", "large-v3")
         # Run on GPU with FP16
-        self.asr_pipeline = WhisperModel(
-            model_size, device="cpu", compute_type="float32"
-        )
+        # self.asr_pipeline = WhisperModel(
+        #     model_size, device="cpu", compute_type="float32"
+        # )
 
     async def transcribe(self, client):
         file_path = await save_audio_to_file(

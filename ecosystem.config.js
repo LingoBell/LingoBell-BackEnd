@@ -11,12 +11,12 @@ module.exports = {
     },
     {
       name: "backend",  // FastAPI 애플리케이션 이름
-      script: "uvicorn",
-      args: "app.main:app --host 0.0.0.0 --port 8000",  // FastAPI 실행 인자
-      interpreter: "python3",  // Python 인터프리터 사용
-      interpreter_args: "-m",  // uvicorn을 모듈로 실행
+      script: "/home/ubuntu/lingobell_backend/source/myenv/bin/python3",
+      args: "app.main.py --host 0.0.0.0 --port 8000",  // FastAPI 실행 인자
+      interpreter: "/home/ubuntu/lingobell_backend/source/myenv/bin/python3",
       env: {
-        NODE_ENV: "production",
+        "PYTHONUNBUFFERED": "1",
+        "PATH": "/home/ubuntu/lingobell_backend/source/myenv/bin:$PATH",
       },
     },
   ],
