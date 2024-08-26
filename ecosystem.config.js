@@ -11,8 +11,8 @@ module.exports = {
     },
     {
       name: "backend",  // FastAPI 애플리케이션 이름
-      script: "/home/ubuntu/lingobell_backend/source/myenv/bin/python3",
-      args: "app.main.py --host 0.0.0.0 --port 8000",  // FastAPI 실행 인자
+      script: "/home/ubuntu/lingobell_backend/source/myenv/bin/uvicorn",
+      args: "app.main:app --host 0.0.0.0 --port 8000",  // FastAPI 실행 인자
       interpreter: "/home/ubuntu/lingobell_backend/source/myenv/bin/python3",
       env: {
         "PYTHONUNBUFFERED": "1",
