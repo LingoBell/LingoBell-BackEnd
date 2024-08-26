@@ -201,7 +201,7 @@ asr_pipeline = ASRFactory.create_asr_pipeline("faster_whisper", model_size="larg
 stt_server = Server(
     vad_pipeline,
     asr_pipeline,
-    host="127.0.0.1",
+    host="0.0.0.0",
     port=8765,
     sampling_rate=16000,
     samples_width=2
