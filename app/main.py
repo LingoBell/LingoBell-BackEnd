@@ -1,9 +1,14 @@
 # 애플리케이션의 진입점
+import asyncio
 from dotenv import load_dotenv
+
+from app.voice_stream_ai.asr.asr_factory import ASRFactory
+from app.voice_stream_ai.server import Server
+from app.voice_stream_ai.vad.vad_factory import VADFactory
 load_dotenv()
 from fastapi.responses import HTMLResponse
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
@@ -20,7 +25,9 @@ from app.database.models import ChatMessage
 from datetime import datetime
 from fastapi.staticfiles import StaticFiles
 
+
 app = FastAPI()
+
 transcription_result = ""
 security = HTTPBearer()
 
@@ -183,6 +190,36 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+# STT 서버 설정
+vad_pipeline = VADFactory.create_vad_pipeline("pyannote", auth_token="huggingface_token")
+asr_pipeline = ASRFactory.create_asr_pipeline("faster_whisper", model_size="large-v3")
+
+stt_server = Server(
+    vad_pipeline,
+    asr_pipeline,
+    host="127.0.0.1",
+    port=8765,
+    sampling_rate=16000,
+    samples_width=2
+)
+
+# WebSocket 엔드포인트 추가
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    print('소켓 들어옴')
+    await websocket.accept()
+    await stt_server.handle_websocket(websocket)
+
+@app.on_event("startup")
+async def startup_event():
+    # 데이터베이스 초기화
+    init_db()
+    
+    # STT 서버 시작
+    await stt_server.start()
+
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
 app.include_router(partners_controller.router, prefix="/api/partners", tags=["partners"])
@@ -196,4 +233,4 @@ async def custom_404_middleware(request: Request, call_next):
     return response 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")
