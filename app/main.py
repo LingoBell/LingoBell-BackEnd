@@ -1,11 +1,11 @@
 # 애플리케이션의 진입점
 import asyncio
 from dotenv import load_dotenv
-
+load_dotenv()
 from app.voice_stream_ai.asr.asr_factory import ASRFactory
 from app.voice_stream_ai.server import Server
 from app.voice_stream_ai.vad.vad_factory import VADFactory
-load_dotenv()
+
 from fastapi.responses import HTMLResponse
 import os
 from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
