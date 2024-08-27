@@ -15,7 +15,7 @@ module.exports = {
   deploy : {
     production : {
       user : 'ubuntu',
-      host : '13.124.160.18',
+      host : 'ec2-54-180-248-106.ap-northeast-2.compute.amazonaws.com',
       ref  : 'origin/main',
       repo : 'https://github.com/LingoBell/LingoBell-BackEnd.git',
       path : '/home/ubuntu/lingobell_backend',
