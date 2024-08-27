@@ -163,10 +163,10 @@ tensorboardX==2.6.2.2
 threadpoolctl==3.5.0
 tiktoken==0.7.0
 tokenizers==0.19.1
-torch==2.4.0
+torch==2.2.0
 torch-audiomentations==0.11.1
 torch-pitch-shift==1.2.4
-torchaudio==2.4.0
+torchaudio==2.2.0
 torchmetrics==1.4.1
 tqdm==4.66.4
 transformers==4.40.2
