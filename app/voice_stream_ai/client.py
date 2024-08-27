@@ -4,9 +4,11 @@
 #     BufferingStrategyFactory,
 # )
 
+from fastapi import WebSocket
 
 from app.voice_stream_ai.buffering_strategy.buffering_strategy_factory import BufferingStrategyFactory
 
+connected_clients = {}
 
 class Client:
     """
@@ -28,7 +30,7 @@ class Client:
         samples_width (int): The width of each audio sample in bits.
     """
 
-    def __init__(self, client_id, sampling_rate, samples_width, chat_room_id, user_id):
+    def __init__(self, websocket: WebSocket, client_id, sampling_rate, samples_width, chat_room_id, user_id):
         self.client_id = client_id
         self.chat_room_id = chat_room_id
         self.user_id = user_id
@@ -53,6 +55,9 @@ class Client:
                 **self.config["processing_args"],
             )
         )
+        self.websocket = websocket
+        self.chat_room_id = chat_room_id
+        self.user_id = user_id
 
     def update_config(self, config_data):
         self.config.update(config_data)

@@ -74,22 +74,20 @@ class Server:
             )
 
             if stt_result:
-                chat_room_id="7b91d418-b",
-                user_id="VR2PhLA2IRbcyX2jVS3cBJfzXTC3",
-
                 translated_result = await process_stt_and_translate(
-                    chat_room_id,
-                    user_id,
+                    client.chat_room_id,
+                    client.user_id,
                     stt_result
                 )
-                # 결과를 클라이언트에 전송
-                await websocket.send(json.dumps({
-                    "type": "transcription",
-                    "stt": stt_result,
-                    "translation": translated_result
-                }))
+            # 동일한 채팅방에 속한 모든 클라이언트에게 결과 브로드캐스트
+            result = json.dumps({
+                "type": "transcription",
+                "stt": stt_result,
+                "translation": translated_result
+            })
 
-            
+            for c in client.connected_clients[client.chat_room_id]:
+                await c.websocket.send(result)            
 
     async def handle_websocket(self, websocket):
         client_id = str(uuid.uuid4())

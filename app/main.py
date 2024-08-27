@@ -8,7 +8,7 @@ from app.voice_stream_ai.vad.vad_factory import VADFactory
 
 from fastapi.responses import HTMLResponse
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
@@ -205,12 +205,35 @@ stt_server = Server(
     samples_width=2
 )
 
+from app.voice_stream_ai.client import Client
+
 # WebSocket 엔드포인트 추가
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print('소켓 들어옴')
     await websocket.accept()
-    await stt_server.handle_websocket(websocket)
+    # await stt_server.handle_websocket(websocket) # 잠시 주석
+     # WebSocket 연결 시 클라이언트로부터 chat_room_id와 user_id를 받는다
+    query_params = websocket.query_params
+    chat_room_id = query_params.get("chat_room_id")
+    user_id = query_params.get("user_id")
+    
+    # 클라이언트를 연결된 클라이언트 리스트에 추가
+    client = Client(websocket, chat_room_id, user_id)
+
+    # 연결된 클라이언트를 해당 채팅방 ID로 그룹화
+    if chat_room_id not in client.connected_clients:
+        client.connected_clients[chat_room_id] = []
+    client.connected_clients[chat_room_id].append(client)
+
+    try:
+        while True:
+            # 클라이언트로부터 데이터 수신
+            data = await websocket.receive_bytes()
+            await client.process_audio_data(client, data)
+    except WebSocketDisconnect:
+        client.connected_clients[chat_room_id].remove(client)
+        if not client.connected_clients[chat_room_id]:
+            del client.connected_clients[chat_room_id]
 
 @app.on_event("startup")
 async def startup_event():

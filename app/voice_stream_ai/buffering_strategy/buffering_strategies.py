@@ -131,6 +131,11 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                 translation = await process_stt_and_translate(transcription["text"], chat_room_id= chat_room_id, user_id= user_id)
                 transcription['translated_message'] = translation
                 json_transcription = json.dumps(transcription)
+                
+                 # 동일한 채팅방에 있는 모든 클라이언트에게 결과 브로드캐스트
+                for client in client.connected_clients[chat_room_id]:
+                    await client.websocket.send(json_transcription)
+                
                 await websocket.send(json_transcription)
                 print('websocket', websocket.state)
                 print(f"WebSocket state: {websocket.state}")
