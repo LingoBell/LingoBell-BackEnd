@@ -121,6 +121,7 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
         ) - self.chunk_offset_seconds
         if vad_results[-1]["end"] < last_segment_should_end_before:
             transcription = await asr_pipeline.transcribe(self.client)
+
             if transcription["text"] != "":
                 end = time.time()
                 print(self.client.client_id)
@@ -131,7 +132,8 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                 translation = await process_stt_and_translate(transcription["text"], chat_room_id= chat_room_id, user_id= user_id)
                 transcription['translated_message'] = translation
                 json_transcription = json.dumps(transcription)
-                await websocket.send(json_transcription)
+                await self.client.server.broadcast_transcription(chat_room_id, transcription)
+                # await websocket.send(json_transcription)
                 print('websocket', websocket.state)
                 print(f"WebSocket state: {websocket.state}")
                 print(f"Client IP: {websocket.remote_address[0]}, Port: {websocket.remote_address[1]}")
