@@ -1,5 +1,6 @@
 # 애플리케이션의 진입점
 import asyncio
+import json
 from dotenv import load_dotenv
 load_dotenv()
 from app.voice_stream_ai.asr.asr_factory import ASRFactory
@@ -8,7 +9,7 @@ from app.voice_stream_ai.vad.vad_factory import VADFactory
 
 from fastapi.responses import HTMLResponse
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
@@ -219,6 +220,11 @@ async def startup_event():
     
     # STT 서버 시작
     await stt_server.start()
+
+@app.websocket("/ws/{chat_room_id}/{user_id}")
+async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
+    await stt_server.handle_websocket(websocket, chat_room_id, user_id)
+
 
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
