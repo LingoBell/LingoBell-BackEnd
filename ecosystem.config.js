@@ -20,7 +20,7 @@ module.exports = {
       repo : 'https://github.com/LingoBell/LingoBell-BackEnd.git',
       path : '/home/ubuntu/lingobell_backend',
       key: "~/develop/lingobell-EC2.pem",
-      'post-deploy' : 'source myenv/bin/activate && pip install -r requirements.txt && pm2 reload ecosystem.config.js --env production && pip list'
+      'post-deploy' : 'source myenv/bin/activate && pip install -r requirements.txt && pm2 reload ecosystem.config.js --env production'
     }
   }
 };
