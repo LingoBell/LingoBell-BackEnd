@@ -204,6 +204,7 @@ class Server:
         finally:
             del self.connected_clients[client_id]
             self.chat_rooms[chat_room_id].remove(websocket)
+            print("커넥션 종료")
             if not self.chat_rooms[chat_room_id]:
                 del self.chat_rooms[chat_room_id]
 
