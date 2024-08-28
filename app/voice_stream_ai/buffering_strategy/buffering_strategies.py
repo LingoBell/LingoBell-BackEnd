@@ -58,6 +58,65 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             )
 
         self.processing_flag = False
+        self.filter_words = [
+                            'mbc', 
+                             '기자', 
+                             '뉴스', 
+                             'thank you', 
+                             'amara.org', 
+                             'MBC', 
+                             'I Love You', 
+                             '오늘 영상은 여기까지입니다 감사합니다', 
+                             '시청해주셔서 감사합니다.', 
+                             'Thank you for watching.',
+                             'That&#39;s all for today&#39;s video. Thank you.',
+                             '이덕영',
+                             "MBC 뉴스", 
+                             "MBC뉴스", 
+                             "Thank you", 
+                             "감사합니다",
+                             "고마워요",
+                             "ご視聴ありがとうございました。",
+                             "ご視聴ありがとうございました",
+                             "Bye-bye.",
+                             "MBC",
+                             "mbc",
+                             "기자",
+                             "신비씨",
+                             "Mmm",
+                             "Mommy",
+                             "字幕由Amara.org社区提供",
+                             "Bye",
+                             "Yeah",
+                             "시청해 주셔서 감사합니다.",
+                             "MBC 뉴스 이덕영입니다.",
+                             "워싱턴에서 MBC 뉴스 이덕영입니다",
+                             "MBC 뉴스 김수영입니다.",
+                             "MBC 뉴스 박진주입니다.",
+                             "MBC 뉴스 손하늘입니다.",
+                             "Oh my gosh, I love you too.",
+                             "I love you so much.",
+                             "I love you.",
+                             "I love you",
+                             "신비씨 사랑합니다",
+                             "KBS",
+                             "kbs",
+                             "Bye bye. Bye bye. Bye bye."
+                            ]
+    
+
+    def should_filter_transcription(self, text):
+        """
+        Check if the transcription contains any of the filter words.
+
+        Args:
+            text (str): The transcription text to check.
+
+        Returns:
+            bool: True if the text should be filtered, False otherwise.
+        """
+        lower_text = text.lower()
+        return any(word.lower() in lower_text for word in self.filter_words)
 
     def process_audio(self, websocket, vad_pipeline, asr_pipeline, user_id, chat_room_id):
         """
@@ -122,7 +181,7 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
         if vad_results[-1]["end"] < last_segment_should_end_before:
             transcription = await asr_pipeline.transcribe(self.client)
 
-            if transcription["text"] != "":
+            if transcription["text"] != "" and not self.should_filter_transcription(transcription["text"]):
                 end = time.time()
                 print(self.client.client_id)
                 transcription["processing_time"] = end - start
