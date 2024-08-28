@@ -101,7 +101,8 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                              "신비씨 사랑합니다",
                              "KBS",
                              "kbs",
-                             "Bye bye. Bye bye. Bye bye."
+                             "Bye bye. Bye bye. Bye bye.",
+                             "수고하셨습니다"
                             ]
     
 

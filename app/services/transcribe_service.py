@@ -1,3 +1,4 @@
+import html
 import json
 import os
 from datetime import datetime
@@ -41,7 +42,9 @@ def translate_text(text: str, target: str) -> str:
     }
     response = requests.get(url, params=params)
     if response.status_code == 200:
-          return response.json()['data']['translations'][0]['translatedText']
+        translated_text = response.json()['data']['translations'][0]['translatedText']
+        unescaped_text = html.unescape(translated_text)
+        return unescaped_text
     else:
         raise Exception(f"Error: {response.status_code}, {response.text}")
 
