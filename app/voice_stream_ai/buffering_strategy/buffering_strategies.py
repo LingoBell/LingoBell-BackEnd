@@ -102,7 +102,22 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                              "KBS",
                              "kbs",
                              "Bye bye. Bye bye. Bye bye.",
-                             "수고하셨습니다"
+                             "수고하셨습니다",
+                             "시청해주셔서 감사합니다",
+                             "영상",
+                             "구독",
+                             "좋아요",
+                             "Thanks for watching!",
+                             "www",
+                             "다음 시간에 또 뵙도록 하겠습니다.",
+                             "多謝您的觀看,再會!",
+                             "여러분",
+                             "Love you all.",
+                             "但是現實反映了林陽明不願意",
+                             "ん",
+                             "날씨였습니다.",
+                             "天地不可摧残",
+                             "Peace"
                             ]
     
 

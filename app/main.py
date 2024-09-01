@@ -223,6 +223,7 @@ async def startup_event():
 
 @app.websocket("/ws/{chat_room_id}/{user_id}")
 async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
+    print('소켓 222')
     await stt_server.handle_websocket(websocket, chat_room_id, user_id)
 
 
