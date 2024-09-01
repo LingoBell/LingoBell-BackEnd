@@ -59,7 +59,7 @@ async def update_user_profile(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/image-upload")
-async def upload_image(request: Request, image: UploadFile = File(...), db: Session = Depends(get_db), credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def upload_image(request: Request, image: UploadFile = File(...), db: Session = Depends(get_db)):
     uid = request.state.user['uid']
 
     if image.content_type not in ["image/jpeg", "image/png"]:
