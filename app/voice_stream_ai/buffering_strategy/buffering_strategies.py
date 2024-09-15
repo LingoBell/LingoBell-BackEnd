@@ -7,7 +7,6 @@ from app.services.transcribe_service import process_stt_and_translate
 
 from .buffering_strategy_interface import BufferingStrategyInterface
 
-
 class SilenceAtEndOfChunk(BufferingStrategyInterface):
     """
     A buffering strategy that processes audio at the end of each chunk with
@@ -120,7 +119,6 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                              "Peace"
                             ]
     
-
     def should_filter_transcription(self, text):
         """
         Check if the transcription contains any of the filter words.

@@ -9,12 +9,12 @@ from app.voice_stream_ai.vad.vad_factory import VADFactory
 
 from fastapi.responses import HTMLResponse
 import os
-from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Request, HTTPException, Depends, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 import app.connection.firebase_config
-from app.database import init_db, SessionLocal
+from app.database import init_db
 from app.controllers import chat_controller, user_controller, partners_controller
 
 import uvicorn
@@ -22,10 +22,8 @@ from fastapi.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-from app.database.models import ChatMessage
 from datetime import datetime
 from fastapi.staticfiles import StaticFiles
-
 
 app = FastAPI()
 
@@ -164,35 +162,6 @@ async def testUserToken (request : Request):  # credentials: HTTPAuthorizationCr
     # print(request.state.user)
     return data
 
-# @app.post("/api/chats/pst")
-# async def process_stt_and_translate(request: Request):
-#                                     # , db: Session = Depends(get_db)):
-#     print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
-#     try:
-#         data = await request.json()
-#         user_id = data.get("userId")
-#         chat_room_id = data.get("chatRoomId")
-#         stt_text = data.get("stt_text")
-#         print("stt text", stt_text)
-
-#         if not user_id or not chat_room_id or not stt_text:
-#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
-        
-#         """  save_to_db(db, chat_room_id, user_id, stt_text, "")
-        
-#         target_language = await determine_target_language(chat_room_id, user_id, db)  
-      
-#         translation = translate_text(stt_text, target=target_language)
-        
-#         save_to_db(db, chat_room_id, user_id, stt_text, translation)
-#         print("save to db 성공") """
-        
-#         return {"status": "success", "message": "STT result processed"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
-
-
 # STT 서버 설정
 vad_pipeline = VADFactory.create_vad_pipeline("pyannote", auth_token="huggingface_token")
 asr_pipeline = ASRFactory.create_asr_pipeline("faster_whisper", model_size="large-v3")
@@ -209,7 +178,7 @@ stt_server = Server(
 # WebSocket 엔드포인트 추가
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print('소켓 들어옴')
+    print('클라이언트에서 연결하는 엔드포인트는 여기임.')
     await websocket.accept()
     await stt_server.handle_websocket(websocket)
 
@@ -221,11 +190,10 @@ async def startup_event():
     # STT 서버 시작
     await stt_server.start()
 
-@app.websocket("/ws/{chat_room_id}/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
-    print('소켓 222')
-    await stt_server.handle_websocket(websocket, chat_room_id, user_id)
-
+# @app.websocket("/ws/{chat_room_id}/{user_id}")
+# async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
+#     print('소켓 222')
+#     await stt_server.handle_websocket(websocket, chat_room_id, user_id)
 
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])
@@ -240,5 +208,4 @@ async def custom_404_middleware(request: Request, call_next):
     return response 
 
 if __name__ == "__main__":
-    
     uvicorn.run(app, host="0.0.0.0", port=8000, loop="asyncio")
