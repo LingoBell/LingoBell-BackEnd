@@ -117,6 +117,7 @@ def update_user_profile_data(db: Session, uid: str, form_data: dict):
         if not user_profile:
             raise HTTPException(status_code=404, detail="User not found")
 
+
         # 기존 데이터 업데이트
         user_profile.userName = form_data['name']
         user_profile.birthday = form_data['birthday']
