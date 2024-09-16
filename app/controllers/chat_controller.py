@@ -145,7 +145,8 @@ async def get_stt_and_translation(chat_room_id: str, timestamp: Optional[datetim
         {
             "messageSenderId": message.messageSenderId,
             "originalMessage": message.originalMessage,
-            "translatedMessage": message.translatedMessage
+            "translatedMessage": message.translatedMessage,
+            "messageTime": message.messageTime
         } for message in messages
     ]
     return {"messages": response_data}
