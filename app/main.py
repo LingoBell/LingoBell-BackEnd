@@ -178,7 +178,6 @@ stt_server = Server(
 # WebSocket 엔드포인트 추가
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    print('클라이언트에서 연결하는 엔드포인트는 여기임.')
     await websocket.accept()
     await stt_server.handle_websocket(websocket)
 
@@ -189,11 +188,6 @@ async def startup_event():
     
     # STT 서버 시작
     await stt_server.start()
-
-# @app.websocket("/ws/{chat_room_id}/{user_id}")
-# async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
-#     print('소켓 222')
-#     await stt_server.handle_websocket(websocket, chat_room_id, user_id)
 
 app.include_router(chat_controller.router, prefix="/api/chats", tags=["chats"])
 app.include_router(user_controller.router, prefix="/api/users", tags=["users"])

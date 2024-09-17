@@ -2,6 +2,8 @@ import asyncio
 import json
 import os
 import time
+import pytz
+from datetime import datetime
 
 from app.services.transcribe_service import process_stt_and_translate
 
@@ -116,7 +118,8 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                              "ん",
                              "날씨였습니다.",
                              "天地不可摧残",
-                             "Peace"
+                             "Peace",
+                             "otter.ai"
                             ]
     
     def should_filter_transcription(self, text):
@@ -201,10 +204,16 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
                 transcription["processing_time"] = end - start
                 transcription['chat_room_id'] = chat_room_id
                 transcription['user_id'] = user_id
-                
+                                
+                # Seoul time zone 설정
+                seoul_tz = pytz.timezone('Asia/Seoul')
+                current_time = datetime.now(seoul_tz)
+                transcription['messageTime'] = current_time.isoformat()                
+                                
                 translation = await process_stt_and_translate(transcription["text"], chat_room_id= chat_room_id, user_id= user_id)
                 transcription['translated_message'] = translation
                 json_transcription = json.dumps(transcription)
+                
                 await self.client.server.broadcast_transcription(chat_room_id, transcription)
                 # await websocket.send(json_transcription)
                 print('websocket', websocket.state)

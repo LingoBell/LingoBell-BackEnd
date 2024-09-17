@@ -31,7 +31,7 @@ class WhisperASR(ASRInterface):
 
         # Extract transcription text
         transcription_text = response.get("text", "").strip()
-
+        
         # Return the transcription result in a consistent format
         to_return = {
             "language": response.get("language"),
