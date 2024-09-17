@@ -12,8 +12,7 @@ import json
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-from app.services.chat_service import get_live_chat_data, create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
-# from app.services.transcribe_service import translate_text, save_to_db, determine_target_language
+from app.services.chat_service import create_chat_room, get_live_chat_list, update_live_chat_status, create_topic_recommendations_for_chat, create_quiz_recommendations_for_chat, get_recommendations_for_chat, get_quiz_for_chat, get_live_chat_history_data, request_chat_room_notification
 from app.database.models import ChatMessage
 from datetime import datetime
 from app.database import get_db
@@ -24,32 +23,6 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 
 router = APIRouter()
-
-# # @router.post("/process_stt_and_translate")
-# async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
-#     print("쌤 죽을ㅇ너ㅏ리ㅏㅇ널")
-#     try:
-#         data = await request.json()
-#         user_id = data.get("userId")
-#         chat_room_id = data.get("chatRoomId")
-#         stt_text = data.get("stt_text")
-#         print("stt text", stt_text)
-
-#         if not user_id or not chat_room_id or not stt_text:
-#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
-        
-#         save_to_db(db, chat_room_id, user_id, stt_text, "")
-        
-#         target_language = await determine_target_language(chat_room_id, user_id, db)  
-      
-#         translation = translate_text(stt_text, target=target_language)
-        
-#         save_to_db(db, chat_room_id, user_id, stt_text, translation)
-#         print("save to db 성공")
-        
-#         return {"status": "success", "message": "STT result processed"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
 
 @router.put("/{chatRoomId}/vacancy")
 def update_live_chat(chatRoomId: str, db: Session = Depends(get_db)):
@@ -73,67 +46,10 @@ def get_live_chat(request : Request,chatRoomId: str, db: Session = Depends(get_d
         raise HTTPException(status_code=404, detail="Chat room not found")
     return chat_data
 
-# @router.post("/pst")
-# async def process_stt_and_translate(request: Request, db: Session = Depends(get_db)):
-#     try:
-#         data = await request.json()
-#         user_id = data.get("userId")
-#         chat_room_id = data.get("chatRoomId")
-#         stt_text = data.get("stt_text")
-
-#         if not user_id or not chat_room_id or not stt_text:
-#             raise HTTPException(status_code=400, detail="Missing userId, chatRoomId or stt_text")
-        
-#         # 타겟 언어를 결정
-#         target_language = await determine_target_language(chat_room_id, user_id, db)
-      
-#         # 텍스트 번역
-#         translation = translate_text(stt_text, target=target_language)
-        
-#         # 번역된 텍스트와 STT 텍스트를 함께 DB에 저장
-#         save_to_db(db=db, chat_room_id=chat_room_id, user_id=user_id, original_text=stt_text, translated_text=translation)
-#         print("save to db 성공")
-        
-#         return {"status": "success", "message": "STT result processed"}
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-
 @router.post("")
 def create_live_chat(request: Request, chat_room: dict, db: Session = Depends(get_db)):
     uid = request.state.user['uid']
     return create_chat_room(db, chat_room, uid)
-
-# @router.get("/{chat_room_id}/stt")
-# async def get_stt(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
-#     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
-#     if timestamp:
-#         query = query.filter(ChatMessage.messageTime > timestamp)
-#     messages = query.all()
-#     response_data = [
-#         {
-#             "type": "",
-#             "messageSenderId": message.messageSenderId,
-#             "originalMessage": message.originalMessage,
-#             "translatedMessage": message.translatedMessage
-#         } for message in messages
-#     ]
-#     return {"messages": response_data}
-
-# @router.get("/{chat_room_id}/translations")
-# def get_translations(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
-#     query = db.query(ChatMessage).filter(ChatMessage.chatRoomId == chat_room_id)
-#     if timestamp:
-#         query = query.filter(ChatMessage.messageTime > timestamp)
-#     messages = query.all()
-#     response_data = [
-#         {
-#             "type": "me" if message.messageSenderId == 1 else "partner",
-#             "messageSenderId": message.messageSenderId,
-#             "originalMessage": message.originalMessage,
-#             "translatedMessage": message.translatedMessage
-#         } for message in messages
-#     ]
-#     return {"messages": response_data}
 
 @router.get("/{chat_room_id}/messages")
 async def get_stt_and_translation(chat_room_id: str, timestamp: Optional[datetime] = None, db: Session = Depends(get_db)):
@@ -199,7 +115,6 @@ def get_chat_room_info_for_notification(request : Request, chat_room_id : str, d
 
 
 async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: str):
-    print('들어와')
     await websocket.accept()
     
     while True:
@@ -209,12 +124,6 @@ async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: s
         if json_data['type'] == 'audio':
             # 오디오 데이터 처리 (STT 서버로 전달)
             stt_result = process_audio(json_data['audio'])
-            print('안녕하세요?')
-            
-            # STT 결과를 데이터베이스에 저장
-            # save_stt_result(db, chat_room_id, stt_result)
-
-            # Translation
             translation = process_stt_and_translate(chat_room_id, user_id, stt_result)
             
             # 클라이언트에 STT 결과 전송
@@ -225,7 +134,4 @@ async def websocket_endpoint(websocket: WebSocket, chat_room_id: str, user_id: s
 
 def process_audio(audio_data):
     stt_result = audio_data
-    # STT 서버로 오디오 데이터 전달 및 결과 반환
-    # 이 부분은 STT 서버의 구현에 따라 달라질 수 있습니다
-    # ...
     return stt_result

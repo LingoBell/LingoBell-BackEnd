@@ -1,7 +1,6 @@
 import html
-import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import requests
 from app.database.models import ChatMessage, ChatRoom, User, UserLearningLang, Language
@@ -52,7 +51,6 @@ async def determine_target_language(chat_room_id: str, sender_id: str, db: Sessi
     print(f"[DEBUG] determine_target_language called with chat_room_id={chat_room_id}, sender_id={sender_id}")
     
     try:
-        # chat_room_users는 get_chat_room_users 함수를 통해 얻습니다.
         chat_room_users = get_chat_room_users(db, chat_room_id, sender_id)
         print(f"[DEBUG] Retrieved chat_room_users: {chat_room_users}")
     except Exception as e:
@@ -127,18 +125,18 @@ def get_chat_room_users(db: Session, chat_room_id: str, current_user_id: int):
             "learningLanguages": [{"language": lang.language, "langLevel": learning_lang.langLevel} for learning_lang, lang in partner_learning_languages]
         }
     }
+    
+KST = timezone(timedelta(hours=9))
+current_time_kst = datetime.now(KST)
 
 def save_to_db(db: Session, chat_room_id: str, user_id: str, original_text: str, translated_text: str):
     try:
-        print("save 실행")
-        # original_text_parsed = json.loads(original_text).get("transcription", original_text)
-              
         new_message = ChatMessage(
             chatRoomId=chat_room_id,
             messageSenderId=user_id,
             originalMessage=original_text,
             translatedMessage=translated_text,
-            messageTime=datetime.utcnow()
+            messageTime=current_time_kst
         )
         
         db.add(new_message)
